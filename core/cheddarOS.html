@@ -1,0 +1,2708 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<title>‎</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #121212;
+    --sidebar-bg: #0f0f0f;
+    --panel-bg: #1a1a1a;
+    --card-bg: #1e1e1e;
+    --border: #333333;
+    --border-hover: #555555;
+    --text: #e0e0e0;
+    --text-dim: #999999;
+    --text-muted: #676767;
+    --accent: #ffffff;
+    --red: #ff5252;
+    --green: #4caf50;
+    --yellow: #ffd700;
+    --notice-bg: #1c1c1c;
+    --notice-border: #ffffff;
+    --notice-text: #ffffff;
+    --header-h: 56px;
+    --sidebar-w: 220px;
+    --font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --mono: monospace;
+  }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #0c0c0c; }
+  #scale-root {
+    width: 100%; height: 100%; position: relative;
+    background: var(--bg); color: var(--text);
+    font-family: var(--font); display: flex; flex-direction: column; overflow: hidden;
+  }
+  #terminal-loader {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    font-family: 'Consolas','Lucida Console',monospace;
+    font-size: 12px; padding: 16px; z-index: 10000; overflow-y: auto;
+    background: #0c0c0c; color: #ccc;
+  }
+  .term-line { margin-bottom: 3px; line-height: 1.4; }
+  .term-blue   { color: #6ea8ff; }
+  .term-green  { color: var(--green); }
+  .term-yellow { color: var(--yellow); }
+  .term-cursor { display: inline-block; width: 7px; height: 13px; animation: blink 0.8s infinite; vertical-align: middle; background: #ccc; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  #app { display: none; flex-direction: column; height: 100%; }
+  #app.visible { display: flex; }
+
+  #header {
+    display: flex; align-items: center;
+    height: var(--header-h); min-height: var(--header-h);
+    border-bottom: 2px solid var(--border);
+    background: var(--sidebar-bg); flex-shrink: 0;
+  }
+  #logo {
+    width: var(--sidebar-w); min-width: var(--sidebar-w);
+    padding: 0 14px; border-right: 1px solid var(--border);
+    height: 100%; display: flex; flex-direction: column; justify-content: center;
+  }
+  #logo h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; color: var(--accent); line-height: 1; }
+  #logo .ver { font-size: 10px; color: var(--text-muted); margin-left: 2px; font-weight: normal; font-family: var(--mono); }
+  #logo .sub { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+
+  #nav { display: flex; align-items: center; height: 100%; flex: 1; }
+  .nav-btn {
+    background: none; border: none; color: var(--text-dim);
+    font-family: var(--font); font-size: 13px; font-weight: 500;
+    padding: 0 18px; height: 100%; cursor: pointer; flex: 1;
+    transition: color 0.15s; position: relative;
+  }
+  .nav-btn:hover { color: var(--accent); }
+  .nav-btn.active { color: var(--accent); font-weight: 700; }
+  .nav-btn.active::after { content:''; position:absolute; bottom:0; left:0; right:0; height:2px; background:var(--accent); }
+
+  #header-right {
+    display: flex; align-items: center; height: 100%;
+    padding: 0 16px; border-left: 1px solid var(--border); flex-shrink: 0;
+  }
+  #account-btn {
+    background: var(--card-bg); border: 1px solid var(--border); color: var(--accent);
+    font-family: var(--mono); font-size: 11px; font-weight: 700;
+    padding: 7px 14px; border-radius: 4px; cursor: pointer;
+    letter-spacing: 0.5px; white-space: nowrap; transition: border-color 0.15s;
+  }
+  #account-btn:hover { border-color: var(--border-hover); }
+
+  .auth-tabs { display: flex; background: var(--card-bg); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+  .auth-tab-btn {
+    background: none; border: none; color: var(--text-dim);
+    font-family: var(--mono); font-size: 11px; font-weight: 700;
+    padding: 7px 14px; cursor: pointer; letter-spacing: 0.5px; transition: background 0.15s, color 0.15s;
+  }
+  .auth-tab-btn.active { color: var(--accent); background: var(--panel-bg); }
+  .auth-submit-btn {
+    width: 100%; background: var(--accent); border: none; color: #000;
+    font-family: var(--font); font-size: 12px; font-weight: 700; padding: 10px;
+    border-radius: 4px; cursor: pointer; letter-spacing: 1px; text-transform: uppercase;
+    margin-top: 2px;
+  }
+  .auth-submit-btn:hover { background: #cccccc; }
+
+  #notice-bar {
+    background: var(--notice-bg); border-bottom: 1px solid var(--notice-border); border-top: 1px solid var(--notice-border);
+    padding: 4px 28px; font-size: 11px; color: var(--notice-text);
+    font-weight: 600; flex-shrink: 0; font-family: var(--mono);
+  }
+
+  #body { display: flex; flex: 1; overflow: hidden; min-height: 0; }
+
+  #sidebar {
+    width: var(--sidebar-w); min-width: var(--sidebar-w);
+    background: var(--sidebar-bg); border-right: 1px solid var(--border);
+    overflow-y: auto; flex-shrink: 0; padding-top: 6px;
+  }
+  #sidebar::-webkit-scrollbar { width: 3px; }
+  #sidebar::-webkit-scrollbar-thumb { background: var(--border); }
+
+  .sidebar-section { margin-bottom: 2px; }
+  .sidebar-header { padding: 7px 14px 4px; font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; font-family: var(--mono); }
+.sidebar-item {
+  display: flex; align-items: center; gap: 7px;
+  width: 100%; background: none; border: none;
+  text-align: left; padding: 5px 14px;
+  font-family: var(--font); font-size: 12px; color: var(--text);
+  cursor: pointer; transition: background 0.1s, color 0.1s;
+}
+.sidebar-item-icon {
+  width: 16px; height: 16px; border-radius: 3px; object-fit: cover;
+  flex-shrink: 0; background: var(--card-bg); border: 1px solid var(--border);
+}
+.sidebar-item-label {
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
+}
+  .sidebar-item:hover { background: var(--panel-bg); }
+  .sidebar-item.active { background: var(--panel-bg); color: var(--accent); font-weight: 600; border-left: 2px solid var(--accent); padding-left: 12px; }
+  .sidebar-item.offline { color: var(--red); }
+  .sidebar-item.fav-item { color: var(--yellow); }
+  .sidebar-divider { height: 1px; background: var(--border); margin: 5px 0; }
+
+  #main { flex: 1; overflow-y: auto; background: var(--bg); }
+  #main::-webkit-scrollbar { width: 5px; }
+  #main::-webkit-scrollbar-thumb { background: var(--border); }
+
+  .page { display: none; padding: 18px 24px; }
+  .page.active { display: block; }
+
+  .home-whats-new { margin-bottom: 18px; }
+  .home-whats-new h2 { font-size: 18px; font-weight: 700; color: var(--accent); margin-bottom: 2px; }
+  .home-whats-new .ver-tag { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; font-family: var(--mono); }
+
+  .changelog-entry {
+    background: var(--panel-bg); border: 1px solid var(--border);
+    border-radius: 4px; padding: 10px 14px; margin-bottom: 6px;
+  }
+  .changelog-entry .entry-ver { font-size: 11px; font-weight: 700; color: var(--accent); font-family: var(--mono); }
+  .changelog-entry .entry-date { font-size: 10px; color: var(--text-muted); margin-left: 8px; }
+  .changelog-entry ul { margin-top: 5px; padding-left: 14px; }
+  .changelog-entry li { font-size: 11px; color: var(--text-dim); line-height: 1.6; }
+
+  .section-label { font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+
+  .popular-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 16px; }
+  .popular-card {
+    background: var(--panel-bg); border: 1px solid var(--border);
+    border-radius: 4px; overflow: hidden; cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .popular-card:hover { border-color: var(--border-hover); }
+  .popular-card .card-img { width: 100%; aspect-ratio: 4/3; background: var(--card-bg); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .popular-card .card-img img { width: 100%; height: 100%; object-fit: cover; }
+  .popular-card .card-img .no-img { font-size: 9px; color: var(--text-muted); }
+  .popular-card .card-label { padding: 6px 8px; font-size: 10px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .info-title { background: var(--panel-bg); border: 1px solid var(--border); display: inline-block; padding: 7px 18px; margin-bottom: 16px; border-radius: 4px; }
+  .info-title h2 { font-size: 15px; font-weight: 700; color: var(--accent); }
+  .info-title .ver { font-size: 10px; color: var(--text-muted); font-family: var(--mono); }
+  .info-cards { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+  .info-card { background: var(--panel-bg); border: 1px solid var(--border); border-radius: 4px; padding: 14px 20px; min-width: 140px; text-align: center; }
+  .info-card .ic-label { font-size: 12px; font-weight: 600; color: var(--accent); margin-bottom: 5px; }
+  .info-card .ic-value { font-size: 11px; color: var(--text-dim); font-family: var(--mono); }
+
+  .cl-entry { border-bottom: 1px solid var(--border); padding: 10px 0; }
+  .cl-entry:first-child { padding-top: 0; }
+  .cl-ver { font-size: 12px; font-weight: 700; color: var(--accent); font-family: var(--mono); }
+  .cl-date { font-size: 10px; color: var(--text-muted); margin-left: 8px; }
+  .cl-items { margin-top: 4px; padding-left: 12px; }
+  .cl-items li { font-size: 11px; color: var(--text-dim); line-height: 1.65; }
+
+  .credits-section { margin-bottom: 18px; }
+  .credits-role { background: var(--panel-bg); border: 1px solid var(--border); display: inline-block; padding: 4px 14px; margin-bottom: 6px; font-size: 12px; font-weight: 600; color: var(--accent); border-radius: 4px; }
+  .credits-people { padding-left: 12px; }
+  .credits-people li { font-size: 11px; color: var(--text-dim); line-height: 1.8; }
+  .credits-disclaimer { margin-top: 20px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 10px; color: var(--text-muted); font-style: italic; }
+
+  .settings-section { margin-bottom: 22px; }
+  .settings-section-title { background: var(--panel-bg); border: 1px solid var(--border); display: inline-block; padding: 4px 14px; margin-bottom: 12px; font-size: 12px; font-weight: 700; color: var(--accent); letter-spacing: 0.5px; border-radius: 4px; }
+  .settings-row { display: flex; align-items: center; justify-content: space-between; background: var(--panel-bg); border: 1px solid var(--border); border-radius: 4px; padding: 11px 16px; margin-bottom: 7px; }
+  .settings-row-label { font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+  .settings-row-desc  { font-size: 10px; color: var(--text-dim); }
+  .settings-select { background: var(--card-bg); border: 1px solid var(--border); color: var(--text); font-family: var(--mono); font-size: 11px; padding: 5px 9px; border-radius: 4px; cursor: pointer; outline: none; }
+  .settings-select option { background: var(--card-bg); }
+
+  .toggle-switch { position: relative; width: 38px; height: 20px; flex-shrink: 0; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider {
+    position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--card-bg); border: 1px solid var(--border); border-radius: 20px;
+    transition: background 0.2s;
+  }
+  .toggle-slider:before {
+    content: ''; position: absolute; height: 14px; width: 14px;
+    left: 2px; bottom: 2px; background: var(--text-dim); border-radius: 50%;
+    transition: transform 0.2s, background 0.2s;
+  }
+  .toggle-switch input:checked + .toggle-slider { background: #1a3a1a; border-color: var(--green); }
+  .toggle-switch input:checked + .toggle-slider:before { transform: translateX(18px); background: var(--green); }
+
+  .color-picker-wrap { display: flex; align-items: center; gap: 8px; }
+  .notice-preview {
+    font-size: 10px; font-weight: 600; padding: 3px 10px; font-family: var(--mono);
+    border: 1px solid var(--notice-border); color: var(--notice-text);
+    background: var(--notice-bg); border-radius: 4px; white-space: nowrap;
+    transition: all 0.15s;
+  }
+
+  #page-credits { padding: 0 !important; }
+  #page-credits.active { display: flex !important; flex-direction: column; }
+
+  .info-header-wrap { padding: 18px 24px; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--bg); }
+  .readme-wrap { padding: 18px 24px; background: var(--panel-bg); margin: 0 24px 18px; border: 1px solid var(--border); border-radius: 4px; }
+  .readme-wrap::-webkit-scrollbar { width: 5px; }
+  .readme-wrap::-webkit-scrollbar-thumb { background: var(--border); }
+
+  .readme-content { font-size: 12px; color: var(--text-dim); line-height: 1.6; }
+  .readme-content h1, .readme-content h2, .readme-content h3 { color: var(--accent); margin-top: 16px; margin-bottom: 8px; font-weight: 700; }
+  .readme-content h1 { font-size: 22px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+  .readme-content h2 { font-size: 18px; }
+  .readme-content h3 { font-size: 14px; }
+  .readme-content p { margin-bottom: 12px; }
+  .readme-content strong { color: var(--text); font-weight: 700; }
+  .readme-content a { color: var(--accent); text-decoration: underline; }
+  .readme-content ul, .readme-content ol { padding-left: 20px; margin-bottom: 12px; }
+  .readme-content li { margin-bottom: 4px; }
+  .readme-content code { background: var(--card-bg); padding: 2px 6px; border-radius: 4px; font-family: var(--mono); font-size: 11px; border: 1px solid var(--border); color: var(--accent); }
+  .readme-content pre { background: var(--card-bg); padding: 12px; border-radius: 4px; overflow-x: auto; border: 1px solid var(--border); margin-bottom: 12px; }
+  .readme-content pre code { border: none; padding: 0; background: transparent; }
+  .readme-content blockquote { border-left: 3px solid var(--border); padding-left: 10px; margin-left: 0; color: var(--text-muted); font-style: italic; }
+  .readme-content img { max-width: 100%; border-radius: 4px; border: 1px solid var(--border); margin-bottom: 12px; }
+
+  .credits-body-wrap { flex: 1; overflow-y: auto; padding: 0 24px 24px; }
+
+  .f-label {
+    font-size: 10px; font-weight: 600; color: var(--text-dim);
+    margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .f-input {
+    width: 100%; background: var(--card-bg); border: 1px solid var(--border);
+    color: var(--text); font-family: var(--font); font-size: 11px;
+    padding: 7px 10px; border-radius: 4px; outline: none;
+    transition: border-color 0.15s;
+  }
+  .f-input:focus { border-color: var(--border-hover); }
+
+  #game-page { display: none; padding: 0; flex-direction: column; height: 100%; }
+  #game-page.active { display: flex; }
+  .game-banner { width: 100%; height: 150px; min-height: 150px; max-height: 150px; background: var(--panel-bg); display: flex; align-items: center; justify-content: center; border-bottom: 1px solid var(--border); overflow: hidden; flex-shrink: 0; }
+  .game-banner img { width: 100%; height: 100%; object-fit: cover; }
+  .game-banner .no-banner { color: var(--text-muted); font-size: 12px; }
+  .game-meta { display: flex; align-items: center; background: var(--card-bg); border-bottom: 1px solid var(--border); flex-shrink: 0; min-height: 44px; }
+  .game-play-btn { background: var(--card-bg); border: none; border-right: 1px solid var(--border); color: var(--accent); font-family: var(--font); font-size: 12px; font-weight: 700; padding: 10px 20px; cursor: pointer; transition: background 0.15s; text-transform: uppercase; letter-spacing: 1px; flex-shrink: 0; }
+  .game-play-btn:hover { background: var(--panel-bg); }
+  .game-fav-btn { background: none; border: none; border-right: 1px solid var(--border); padding: 10px 12px; cursor: pointer; font-size: 15px; flex-shrink: 0; transition: opacity 0.15s; color: var(--text-dim); }
+  .game-fav-btn:hover { opacity: 0.7; }
+  .game-meta-info { display: flex; align-items: center; gap: 9px; padding: 0 12px; overflow: hidden; min-width: 0; }
+  .game-icon-sm { width: 26px; height: 26px; border-radius: 4px; object-fit: cover; flex-shrink: 0; border: 1px solid var(--border); background: var(--card-bg); }
+  .game-name-bar { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .game-body { display: flex; gap: 16px; padding: 14px 20px; align-items: flex-start; overflow-y: auto; }
+  .game-body-left { flex: 1 1 0; min-width: 0; max-width: 60%; }
+  .game-body-right { flex: 0 0 38%; min-width: 220px; }
+  .game-ad-slot { width: 100%; min-height: 250px; background: var(--panel-bg); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+  .game-desc-box { background: var(--panel-bg); border: 1px solid var(--border); border-radius: 4px; padding: 14px; font-size: 12px; color: var(--text-dim); line-height: 1.6; }
+  .game-offline-notice { padding: 10px 14px; background: #200; border: 1px solid var(--red); border-radius: 4px; font-size: 12px; color: var(--red); }
+
+  #tool-page { display: none; padding: 0; flex-direction: column; height: 100%; }
+  #tool-page.active { display: flex; }
+  .tool-frame-wrap { flex: 1; background: var(--card-bg); display: flex; align-items: center; justify-content: center; }
+  .tool-placeholder { font-size: 12px; color: var(--text-muted); }
+
+  #user-page { display: none; padding: 0; flex-direction: column; height: 100%; }
+  #user-page.active { display: flex; }
+  .user-page-bar { display: flex; align-items: center; gap: clamp(8px,1.2vw,14px); background: var(--card-bg); border-bottom: 1px solid var(--border); padding: clamp(8px,1.4vw,14px) clamp(14px,2.6vw,28px); flex-shrink: 0; }
+  .user-page-body { flex: 1; overflow-y: auto; padding: 0; }
+  .kebab-btn {
+    background: var(--panel-bg); border: 1px solid var(--border); color: var(--text-dim);
+    font-family: var(--font); font-size: 14px; font-weight: 700; padding: 6px 12px;
+    border-radius: 4px; cursor: pointer; letter-spacing: 1px; transition: border-color 0.15s, color 0.15s;
+  }
+  .kebab-btn:hover { border-color: var(--border-hover); color: var(--accent); }
+  .kebab-menu {
+    position: absolute; background: var(--panel-bg); border: 1px solid var(--border);
+    border-radius: 4px; overflow: hidden; z-index: 500; min-width: 160px;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.5);
+  }
+  .kebab-menu-item {
+    display: block; width: 100%; background: none; border: none; text-align: left;
+    padding: 9px 14px; font-family: var(--font); font-size: 12px; color: var(--text);
+    cursor: pointer; transition: background 0.15s;
+  }
+  .kebab-menu-item:hover { background: var(--card-bg); }
+  .kebab-menu-item.danger { color: var(--red); }
+
+  /* ---- Badges (Developer / Early Supporter) ---- */
+  .holo-badge {
+    display: inline-block;
+    font-weight: 800;
+    line-height: 1;
+    position: relative; /* anchor point only; tooltip itself is positioned via JS */
+    cursor: default;    /* was "help" -- that's what drew the native "?" icon */
+  }
+  .holo-badge.dev-badge {
+    animation: holoColor 8s linear infinite;
+  }
+  .holo-badge.gold-badge {
+    animation: goldColor 4s linear infinite;
+  }
+  /* Global tooltip for holo badges. Positioned with JS (position: fixed)
+     instead of an absolutely-positioned ::after, so it can never be clipped
+     by a scrollable/overflow-hidden ancestor (profile pages, user lists,
+     modals, etc. all scroll their own containers). */
+  .global-badge-tooltip {
+    position: fixed;
+    background: #000;
+    color: #fff;
+    font-size: 10px;
+    font-family: var(--font);
+    font-weight: 600;
+    padding: 4px 8px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 99999;
+    opacity: 0;
+    transform: translate(-50%, 4px);
+    transition: opacity 0.12s ease, transform 0.12s ease;
+  }
+  .global-badge-tooltip.visible {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+@keyframes holoColor {
+  0%   { color: #ff3cac; text-shadow: 0 0 6px rgba(255,60,172,.85), 0 0 14px rgba(255,60,172,.45); }
+  16%  { color: #784ba0; text-shadow: 0 0 6px rgba(120,75,160,.85), 0 0 14px rgba(120,75,160,.45); }
+  33%  { color: #2b86c5; text-shadow: 0 0 6px rgba(43,134,197,.85), 0 0 14px rgba(43,134,197,.45); }
+  50%  { color: #22e5b0; text-shadow: 0 0 6px rgba(34,229,176,.85), 0 0 14px rgba(34,229,176,.45); }
+  66%  { color: #f9f871; text-shadow: 0 0 6px rgba(249,248,113,.85), 0 0 14px rgba(249,248,113,.45); }
+  83%  { color: #ff5e62; text-shadow: 0 0 6px rgba(255,94,98,.85), 0 0 14px rgba(255,94,98,.45); }
+  100% { color: #ff3cac; text-shadow: 0 0 6px rgba(255,60,172,.85), 0 0 14px rgba(255,60,172,.45); }
+}
+@keyframes goldColor {
+  0%   { color: #fff2ac; text-shadow: 0 0 6px rgba(255,242,172,.85), 0 0 14px rgba(255,242,172,.45); }
+  25%  { color: #ffd700; text-shadow: 0 0 6px rgba(255,215,0,.85), 0 0 14px rgba(255,215,0,.45); }
+  50%  { color: #ffb347; text-shadow: 0 0 6px rgba(255,179,71,.85), 0 0 14px rgba(255,179,71,.45); }
+  75%  { color: #ff8c00; text-shadow: 0 0 6px rgba(255,140,0,.85), 0 0 14px rgba(255,140,0,.45); }
+  100% { color: #fff2ac; text-shadow: 0 0 6px rgba(255,242,172,.85), 0 0 14px rgba(255,242,172,.45); }
+}
+
+  .theme-grid { display: flex; gap: 10px; flex-wrap: wrap; }
+  .theme-option {
+    cursor: pointer; border: 2px solid var(--border); border-radius: 6px;
+    overflow: hidden; transition: border-color 0.15s, transform 0.1s;
+    width: 110px;
+  }
+  .theme-option:hover { border-color: var(--border-hover); transform: translateY(-1px); }
+  .theme-option.selected { border-color: var(--accent); }
+  .theme-preview { width: 110px; height: 74px; position: relative; overflow: hidden; }
+  .theme-preview .prev-header { height: 16px; border-bottom: 1px solid; display: flex; align-items: center; padding: 0 5px; gap: 3px; }
+  .theme-preview .prev-dot { width: 4px; height: 4px; border-radius: 50%; }
+  .theme-preview .prev-body { display: flex; height: calc(100% - 16px); }
+  .theme-preview .prev-sidebar { width: 28px; border-right: 1px solid; padding: 3px 4px; display: flex; flex-direction: column; gap: 2px; }
+  .theme-preview .prev-sidebar-item { height: 3px; border-radius: 1px; }
+  .theme-preview .prev-content { flex: 1; padding: 4px; display: flex; flex-direction: column; gap: 2px; }
+  .theme-preview .prev-content-block { height: 8px; border: 1px solid; border-radius: 1px; }
+  .theme-label { padding: 5px 7px; font-size: 10px; font-weight: 600; color: var(--text); background: var(--panel-bg); text-align: center; }
+
+  body.theme-midnight {
+    --bg: #0d1117; --sidebar-bg: #161b22; --panel-bg: #21262d;
+    --card-bg: #2d333b; --border: #30363d; --border-hover: #4c5461; --text: #c9d1d9;
+    --text-dim: #8b949e; --text-muted: #484f58; --accent: #58a6ff;
+  }
+  body.theme-forest {
+    --bg: #0f1a0f; --sidebar-bg: #0a120a; --panel-bg: #122012;
+    --card-bg: #1a2e1a; --border: #1a3a1a; --border-hover: #2f582f; --text: #c8e6c8;
+    --text-dim: #6a9a6a; --text-muted: #3a5a3a; --accent: #44aa44;
+  }
+  body.theme-blood {
+    --bg: #150808; --sidebar-bg: #0d0404; --panel-bg: #1e0c0c;
+    --card-bg: #2a1010; --border: #4a1515; --border-hover: #6a2222; --text: #e8c8c8;
+    --text-dim: #9a6060; --text-muted: #5a3030; --accent: #ee4444;
+  }
+  body.theme-purple {
+    --bg: #12091a; --sidebar-bg: #0c0510; --panel-bg: #1c1028;
+    --card-bg: #261836; --border: #3a2050; --border-hover: #52306e; --text: #ddd0f0;
+    --text-dim: #9070b8; --text-muted: #503878; --accent: #cc88ff;
+  }
+  body.theme-slate {
+    --bg: #1c2028; --sidebar-bg: #141820; --panel-bg: #252b35;
+    --card-bg: #2e3540; --border: #3d4555; --border-hover: #56617a; --text: #d0d8e8;
+    --text-dim: #7888a0; --text-muted: #485060; --accent: #a0c0e0;
+  }
+
+  .modal-overlay { display: flex; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; align-items: center; justify-content: center; }
+  .modal-box {
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 28px 24px;
+    max-width: 360px;
+    width: 90%;
+    text-align: center;
+    max-height: 85vh;
+    overflow-y: auto;
+  }  
+  .modal-box h2 { color: var(--accent); font-size: 18px; margin-bottom: 4px; }
+  .modal-box p { color: var(--text-dim); font-size: 11px; margin-bottom: 18px; line-height: 1.6; }
+  .modal-btn { background: var(--card-bg); border: 1px solid var(--border); color: var(--accent); font-family: var(--font); font-size: 12px; font-weight: 700; padding: 9px 24px; cursor: pointer; letter-spacing: 1px; text-transform: uppercase; }
+  .modal-btn:hover { border-color: var(--border-hover); }
+</style>
+</head>
+<body>
+
+<div id="scale-root">
+  <div id="terminal-loader">
+    <div id="terminal-content"></div>
+    <div class="term-line">cheddar@console$ &gt; <span class="term-cursor"></span></div>
+  </div>
+
+  <div id="app">
+    <div id="header">
+      <div id="logo">
+        <h1>CheddarOS™<span class="ver" id="logo-ver"></span></h1>
+        <div class="sub">Protected by U.S. Copyright and DMCA.</div>
+      </div>
+      <nav id="nav">
+        <button class="nav-btn active" data-tab="home">HOME</button>
+        <button class="nav-btn" data-tab="changelogs">CHANGELOGS</button>
+        <button class="nav-btn" data-tab="credits">CREDITS</button>
+        <button class="nav-btn" data-tab="settings">SETTINGS</button>
+        <button class="nav-btn" data-tab="users">USERS</button>
+      </nav>
+      <div id="header-right">
+        <button id="account-btn" onclick="openAuthModal('signin')">SIGN IN</button>
+      </div>
+    </div>
+
+    <div id="notice-bar" style="display:none"></div>
+
+    <div id="body">
+      <div id="sidebar">
+        <div style="padding:7px 10px;position:relative;">
+          <input type="text" id="game-search" placeholder="Search games & tools..." autocomplete="off" style="width:100%;background:var(--panel-bg);border:1px solid var(--border);color:var(--text);padding:6px;border-radius:4px;font-family:var(--font);font-size:11px;outline:none;">
+          <div id="search-dropdown" style="display:none;position:absolute;top:100%;left:10px;right:10px;background:var(--sidebar-bg);border:1px solid var(--border);border-top:none;z-index:1000;max-height:260px;overflow-y:auto;box-shadow:0 6px 14px rgba(0,0,0,0.5);"></div>
+        </div>
+
+        <div class="sidebar-section" id="fav-section" style="display:none">
+          <div class="sidebar-header" style="color:var(--yellow)">- FAVORITES</div>
+          <div id="fav-sidebar"></div>
+        </div>
+        <div class="sidebar-divider" id="fav-divider" style="display:none"></div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-header">- GAMES</div>
+          <div id="games-sidebar"></div>
+        </div>
+        <div class="sidebar-divider"></div>
+        <div class="sidebar-section">
+          <div class="sidebar-header">- TOOLS</div>
+          <div id="tools-sidebar"></div>
+        </div>
+        <div class="sidebar-divider"></div>
+        <div class="sidebar-section" id="offline-section">
+          <div class="sidebar-header">- OFFLINE</div>
+          <div id="offline-sidebar"></div>
+        </div>
+      </div>
+
+      <div id="main">
+        <div class="page active" id="page-home">
+          <div class="home-whats-new">
+            <h2>What's new?</h2>
+            <div class="ver-tag" id="home-ver"></div>
+            <div id="home-changelog-preview"></div>
+          </div>
+          <div id="home-ad-banner" style="margin-bottom:14px;"></div>
+          <div style="margin-bottom:4px;" class="section-label">Popular Games</div>
+          <div class="popular-grid" id="popular-grid"></div>
+          <div id="recent-wrap" style="display:none">
+            <div style="margin-bottom:4px;" class="section-label">Recently Played</div>
+            <div class="popular-grid" id="recent-grid"></div>
+          </div>
+        </div>
+
+        <div class="page" id="page-changelogs">
+          <div class="changelog-list" id="changelog-list"></div>
+        </div>
+
+        <div class="page" id="page-credits">
+          <div class="info-header-wrap">
+            <div class="info-title">
+              <h2>CheddarOS Information</h2>
+              <div class="ver" id="info-ver"></div>
+            </div>
+            <div class="info-cards">
+              <div class="info-card">
+                <div class="ic-label">Last Updated</div>
+                <div class="ic-value" id="ic-updated">Loading...</div>
+              </div>
+              <div class="info-card">
+                <div class="ic-label">Build</div>
+                <div class="ic-value" id="ic-commits">Loading...</div>
+              </div>
+              <div class="info-card">
+                <div class="ic-label">Bypassed</div>
+                <div class="ic-value" id="ic-blocked">14</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="credits-body-wrap">
+            <div id="credits-content"></div>
+          </div>
+
+          <div class="readme-wrap">
+            <div class="readme-content" id="readme-content">Loading Terms of Service...</div>
+          </div>
+        </div>
+
+        <div class="page" id="page-settings">
+
+          <div class="settings-section">
+            <div class="settings-section-title">APPEARANCE</div>
+
+            <div class="settings-row" style="flex-direction:column;align-items:flex-start;gap:12px;margin-bottom:7px;">
+              <div>
+                <div class="settings-row-label">Color Theme</div>
+                <div class="settings-row-desc">Choose a visual theme for CheddarOS</div>
+              </div>
+              <div class="theme-grid" id="theme-grid">
+                <div class="theme-option selected" data-theme="dark">
+                  <div class="theme-preview" style="background:#121212;">
+                    <div class="prev-header" style="background:#0f0f0f;border-color:#333;"><div class="prev-dot" style="background:#fff;"></div><div class="prev-dot" style="background:#555;"></div></div>
+                    <div class="prev-body">
+                      <div class="prev-sidebar" style="background:#0f0f0f;border-color:#333;"><div class="prev-sidebar-item" style="background:#444;"></div><div class="prev-sidebar-item" style="background:#444;"></div></div>
+                      <div class="prev-content"><div class="prev-content-block" style="background:#1a1a1a;border-color:#333;"></div><div class="prev-content-block" style="background:#1a1a1a;border-color:#333;width:60%"></div></div>
+                    </div>
+                  </div>
+                  <div class="theme-label">Dark</div>
+                </div>
+                <div class="theme-option" data-theme="midnight">
+                  <div class="theme-preview" style="background:#0d1117;">
+                    <div class="prev-header" style="background:#161b22;border-color:#30363d;"><div class="prev-dot" style="background:#58a6ff;"></div><div class="prev-dot" style="background:#30363d;"></div></div>
+                    <div class="prev-body">
+                      <div class="prev-sidebar" style="background:#161b22;border-color:#30363d;"><div class="prev-sidebar-item" style="background:#30363d;"></div><div class="prev-sidebar-item" style="background:#30363d;"></div></div>
+                      <div class="prev-content"><div class="prev-content-block" style="background:#161b22;border-color:#30363d;"></div><div class="prev-content-block" style="background:#161b22;border-color:#30363d;width:60%"></div></div>
+                    </div>
+                  </div>
+                  <div class="theme-label">Midnight Blue</div>
+                </div>
+                <div class="theme-option" data-theme="forest">
+                  <div class="theme-preview" style="background:#0f1a0f;">
+                    <div class="prev-header" style="background:#0a120a;border-color:#1a3a1a;"><div class="prev-dot" style="background:#44aa44;"></div><div class="prev-dot" style="background:#1a3a1a;"></div></div>
+                    <div class="prev-body">
+                      <div class="prev-sidebar" style="background:#0a120a;border-color:#1a3a1a;"><div class="prev-sidebar-item" style="background:#1a3a1a;"></div><div class="prev-sidebar-item" style="background:#1a3a1a;"></div></div>
+                      <div class="prev-content"><div class="prev-content-block" style="background:#0f1a0f;border-color:#1a3a1a;"></div><div class="prev-content-block" style="background:#0f1a0f;border-color:#1a3a1a;width:60%"></div></div>
+                    </div>
+                  </div>
+                  <div class="theme-label">Forest</div>
+                </div>
+                <div class="theme-option" data-theme="blood">
+                  <div class="theme-preview" style="background:#150808;">
+                    <div class="prev-header" style="background:#0d0404;border-color:#4a1515;"><div class="prev-dot" style="background:#ee4444;"></div><div class="prev-dot" style="background:#4a1515;"></div></div>
+                    <div class="prev-body">
+                      <div class="prev-sidebar" style="background:#0d0404;border-color:#4a1515;"><div class="prev-sidebar-item" style="background:#4a1515;"></div><div class="prev-sidebar-item" style="background:#4a1515;"></div></div>
+                      <div class="prev-content"><div class="prev-content-block" style="background:#1e0c0c;border-color:#4a1515;"></div><div class="prev-content-block" style="background:#1e0c0c;border-color:#4a1515;width:60%"></div></div>
+                    </div>
+                  </div>
+                  <div class="theme-label">Blood Red</div>
+                </div>
+                <div class="theme-option" data-theme="purple">
+                  <div class="theme-preview" style="background:#12091a;">
+                    <div class="prev-header" style="background:#0c0510;border-color:#3a2050;"><div class="prev-dot" style="background:#cc88ff;"></div><div class="prev-dot" style="background:#3a2050;"></div></div>
+                    <div class="prev-body">
+                      <div class="prev-sidebar" style="background:#0c0510;border-color:#3a2050;"><div class="prev-sidebar-item" style="background:#3a2050;"></div><div class="prev-sidebar-item" style="background:#3a2050;"></div></div>
+                      <div class="prev-content"><div class="prev-content-block" style="background:#1c1028;border-color:#3a2050;"></div><div class="prev-content-block" style="background:#1c1028;border-color:#3a2050;width:60%"></div></div>
+                    </div>
+                  </div>
+                  <div class="theme-label">Purple</div>
+                </div>
+                <div class="theme-option" data-theme="slate">
+                  <div class="theme-preview" style="background:#1c2028;">
+                    <div class="prev-header" style="background:#141820;border-color:#3d4555;"><div class="prev-dot" style="background:#a0c0e0;"></div><div class="prev-dot" style="background:#3d4555;"></div></div>
+                    <div class="prev-body">
+                      <div class="prev-sidebar" style="background:#141820;border-color:#3d4555;"><div class="prev-sidebar-item" style="background:#3d4555;"></div><div class="prev-sidebar-item" style="background:#3d4555;"></div></div>
+                      <div class="prev-content"><div class="prev-content-block" style="background:#252b35;border-color:#3d4555;"></div><div class="prev-content-block" style="background:#252b35;border-color:#3d4555;width:60%"></div></div>
+                    </div>
+                  </div>
+                  <div class="theme-label">Slate</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-row">
+              <div>
+                <div class="settings-row-label">Announcement Outline Color</div>
+                <div class="settings-row-desc">Changes the notification bar border and text color</div>
+              </div>
+              <div class="color-picker-wrap">
+                <div class="notice-preview" id="notice-preview">[NOTICE] CheddarOS on top!</div>
+                <input type="color" id="notice-color-picker" value="#ffffff" style="width:44px;height:28px;background:var(--card-bg);border:1px solid var(--border);border-radius:4px;cursor:pointer;">
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <div class="settings-section-title">GAMEPLAY</div>
+            <div class="settings-row">
+              <div>
+                <div class="settings-row-label">Game Launch Mode</div>
+                <div class="settings-row-desc">Choose how games open when you press PLAY</div>
+              </div>
+              <select class="settings-select" id="launch-mode-select">
+                <option value="tab">TAB</option>
+                <option value="window">WINDOW</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <div class="settings-section-title">DISPLAY</div>
+            <div class="settings-row">
+              <div>
+                <div class="settings-row-label">Skip Welcome Screen</div>
+                <div class="settings-row-desc">Don't show the welcome popup on startup</div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="skip-welcome-toggle">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="settings-row">
+              <div>
+                <div class="settings-row-label">Hide Offline Games</div>
+                <div class="settings-row-desc">Remove offline games from the sidebar</div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="hide-offline-toggle">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="settings-row">
+              <div>
+                <div class="settings-row-label">Pretty Names Only</div>
+                <div class="settings-row-desc">Show full names instead of short keys for all games & tools</div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="pretty-names-toggle">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="settings-section" id="account-settings-section" style="display:none;">
+            <div class="settings-section-title">ACCOUNT</div>
+
+            <div class="settings-row" style="flex-direction:column;align-items:flex-start;gap:12px;">
+              <div>
+                <div class="settings-row-label">Change Password</div>
+                <div class="settings-row-desc">Update the password for your CheddarOS account</div>
+              </div>
+              <div style="width:100%;display:flex;flex-direction:column;gap:8px;max-width:360px;">
+                <input type="password" id="cp-current" class="f-input" placeholder="Current password" autocomplete="off">
+                <input type="password" id="cp-new" class="f-input" placeholder="New password" autocomplete="off">
+                <input type="password" id="cp-confirm" class="f-input" placeholder="Confirm new password" autocomplete="off">
+                <button onclick="submitChangePassword()" style="align-self:flex-start;background:var(--card-bg);border:1px solid var(--border);color:var(--accent);font-family:var(--font);font-size:11px;font-weight:700;padding:8px 16px;border-radius:4px;cursor:pointer;letter-spacing:0.5px;">UPDATE PASSWORD</button>
+                <div id="cp-status" style="display:none;"></div>
+              </div>
+            </div>
+
+            <div class="settings-row">
+              <div>
+                <div class="settings-row-label">Sign Out</div>
+                <div class="settings-row-desc">Sign out of <span id="account-settings-username">your account</span> on this device</div>
+              </div>
+              <button onclick="handleSignOutFromSettings()" style="background:var(--card-bg);border:1px solid var(--border);color:var(--text);font-family:var(--font);font-size:11px;font-weight:700;padding:8px 16px;border-radius:4px;cursor:pointer;letter-spacing:0.5px;">SIGN OUT</button>
+            </div>
+
+            <div class="settings-row">
+              <div>
+                <div class="settings-row-label" style="color:var(--red);">Delete Account</div>
+                <div class="settings-row-desc">Permanently delete your account and playtime stats</div>
+              </div>
+              <button onclick="openDeleteAccountModal()" style="background:var(--card-bg);border:1px solid var(--red);color:var(--red);font-family:var(--font);font-size:11px;font-weight:700;padding:8px 16px;border-radius:4px;cursor:pointer;letter-spacing:0.5px;">DELETE</button>
+            </div>
+          </div>
+
+          <div style="margin-top:6px;">
+            <button id="reset-cloak-btn" style="background:none;border:none;color:var(--text-muted);font-family:var(--font);font-size:10px;cursor:pointer;text-decoration:underline;padding:0;">Reset to default</button>
+          </div>
+
+        </div>
+
+        <div class="page" id="page-users">
+          <div class="section-label" style="margin-bottom:10px;">Look Up a Player</div>
+          <div style="display:flex;gap:8px;max-width:420px;margin-bottom:10px;">
+            <input type="text" id="lookup-username" class="f-input" placeholder="username" autocomplete="off"
+              onkeydown="if(event.key==='Enter') lookupUser();">
+            <button onclick="lookupUser()" style="background:var(--card-bg);border:1px solid var(--border);color:var(--accent);font-family:var(--font);font-size:11px;font-weight:700;padding:0 18px;border-radius:4px;cursor:pointer;white-space:nowrap;">SEARCH</button>
+          </div>
+          <div id="lookup-result"></div>
+
+          <div class="section-label" style="margin:20px 0 10px;">All Accounts</div>
+          <div id="all-users-list" style="display:flex;flex-direction:column;gap:7px;max-width:520px;"></div>
+        </div>
+
+        <div id="user-page">
+          <div class="user-page-bar">
+            <input type="text" id="profile-search-input" class="f-input" placeholder="Search another username..." autocomplete="off"
+              style="max-width:280px;" onkeydown="if(event.key==='Enter') profileSearch();">
+            <button onclick="profileSearch()" style="background:var(--card-bg);border:1px solid var(--border);color:var(--accent);font-family:var(--font);font-size:11px;font-weight:700;padding:8px 16px;border-radius:4px;cursor:pointer;white-space:nowrap;">SEARCH</button>
+          </div>
+          <div class="user-page-body" id="user-page-body"></div>
+        </div>
+
+        <div id="game-page">
+          <div class="game-banner" id="game-banner">
+            <div class="no-banner">No image</div>
+          </div>
+          <div class="game-meta">
+            <button class="game-play-btn" id="game-play-btn">PLAY</button>
+            <button class="game-fav-btn" id="game-fav-btn">☆</button>
+            <button id="game-flag-btn" onclick="requireAccount(openBugReportModal)" title="Report a bug with this game" style="background: none; border: none; border-right: 1px solid var(--border); padding: 10px 12px; cursor: pointer; font-size: 15px; flex-shrink: 0; color: var(--red);">⚑</button>
+            <div class="game-meta-info">
+              <img class="game-icon-sm" id="game-icon-sm" src="" alt="" style="display:none" onerror="this.style.display='none'">
+              <div class="game-name-bar" id="game-name-bar">Game name</div>
+            </div>
+          </div>
+          <div class="game-body">
+            <div class="game-body-left" id="game-desc-area"></div>
+            <div class="game-body-right" id="game-ad-area"></div>
+          </div>
+        </div>
+
+        <div id="tool-page">
+          <div class="tool-frame-wrap"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="auth-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-box" style="max-width:360px;text-align:left;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border);">
+        <div class="auth-tabs">
+          <button id="auth-tab-signin" class="auth-tab-btn active" onclick="switchAuthTab('signin')">SIGN IN</button>
+          <button id="auth-tab-register" class="auth-tab-btn" onclick="switchAuthTab('register')">REGISTER</button>
+        </div>
+        <button id="auth-close-btn" style="background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;line-height:1;padding:2px 6px;">×</button>
+      </div>
+
+      <div id="auth-signin-panel" style="display:flex;flex-direction:column;gap:11px;">
+        <div>
+          <div class="f-label">Username</div>
+          <input type="text" id="signin-username" class="f-input" placeholder="username" autocomplete="off">
+        </div>
+        <div>
+          <div class="f-label">Password</div>
+          <input type="password" id="signin-password" class="f-input" placeholder="••••••••" autocomplete="off">
+        </div>
+        <button id="signin-submit-btn" onclick="submitSignIn()" class="auth-submit-btn">SIGN IN</button>
+        <div id="signin-status" style="display:none;"></div>
+      </div>
+
+      <div id="auth-register-panel" style="display:none;flex-direction:column;gap:11px;">
+        <div>
+          <div class="f-label">Username <span style="color:var(--text-muted);font-weight:400;">(a–z, 0–9, _ only)</span></div>
+          <input type="text" id="register-username" class="f-input" placeholder="username" autocomplete="off" maxlength="20">
+          <div id="register-username-hint" style="font-size:9px;color:var(--text-muted);margin-top:4px;"></div>
+        </div>
+        <div>
+          <div class="f-label">Password</div>
+          <input type="password" id="register-password" class="f-input" placeholder="••••••••" autocomplete="off">
+        </div>
+        <div>
+          <div class="f-label">Confirm Password</div>
+          <input type="password" id="register-confirm" class="f-input" placeholder="••••••••" autocomplete="off">
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:8px;margin-top:2px;">
+          <input type="checkbox" id="register-tos-check" style="margin-top:2px;flex-shrink:0;">
+          <label for="register-tos-check" style="font-size:10px;color:var(--text-dim);line-height:1.5;">By creating an account you agree to the <span style="color:var(--accent);text-decoration:underline;cursor:pointer;" onclick="openTosModal()">Terms of Service</span>.</label>
+        </div>
+        <button id="register-submit-btn" onclick="submitRegister()" class="auth-submit-btn">CREATE ACCOUNT</button>
+        <div id="register-status" style="display:none;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tos-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-box" style="max-width:460px;text-align:left;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border);">
+        <span style="font-size:14px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;">Terms of Service</span>
+        <button id="tos-close-btn" style="background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;line-height:1;padding:2px 6px;">×</button>
+      </div>
+      <div style="max-height:360px;overflow-y:auto;padding-right:4px;">
+        <div class="readme-content" id="tos-modal-content">Loading Terms of Service...</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="bug-report-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-box" style="max-width:420px;text-align:left;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border);">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:14px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;">Report a Bug</span>
+        </div>
+        <button id="bug-report-close-btn" style="background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;line-height:1;padding:2px 6px;">×</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:11px;">
+        <div>
+          <div class="f-label">Game</div>
+          <input type="text" id="br-game" class="f-input" readonly style="opacity:0.75;cursor:default;">
+        </div>
+        <div>
+          <div class="f-label">Bug Type</div>
+          <select id="br-bugtype" class="f-input" style="cursor:pointer;" onchange="onBrBugTypeChange()">
+            <option value="Gameplay">Gameplay</option>
+            <option value="Visual">Visual</option>
+            <option value="Performance">Performance</option>
+            <option value="Audio">Audio</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div id="br-bugtype-other-row" style="display:none;">
+          <div class="f-label">Specify Bug Type</div>
+          <input type="text" id="br-bugtype-other" placeholder="Describe the type of bug..." autocomplete="off" class="f-input">
+        </div>
+        <div>
+          <div class="f-label">What broke?</div>
+          <input type="text" id="br-title" placeholder="Short summary of the bug..." autocomplete="off" class="f-input">
+        </div>
+        <div>
+          <div class="f-label">Steps to Reproduce</div>
+          <textarea id="br-desc" rows="4" placeholder="Describe what happened and how to reproduce it..."
+            style="width:100%;background:var(--card-bg);border:1px solid var(--border);color:var(--text);font-family:var(--font);font-size:11px;padding:8px 10px;border-radius:4px;outline:none;resize:vertical;line-height:1.6;"></textarea>
+        </div>
+        <div>
+        <div style="font-size:10px;color:var(--red);line-height:1.5;background:rgba(255,82,82,0.08);border:1px solid var(--red);border-radius:4px;padding:8px 10px;">
+          ⚑ Abusing the report system (spam, fake reports, harassment) will get your account permanently banned.
+        </div>
+        <button id="br-submit-btn" onclick="submitReport()"
+          style="width:100%;background:var(--card-bg);border:1px solid var(--border);color:var(--accent);font-family:var(--font);font-size:12px;font-weight:700;padding:10px;border-radius:4px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;margin-top:4px;transition:border-color 0.15s;"
+          onmouseover="this.style.borderColor='var(--border-hover)'" onmouseout="this.style.borderColor='var(--border)'">
+          REVIEW & SUBMIT
+        </button>
+        <div id="br-status" style="display:none;font-size:10px;text-align:center;padding:6px;border-radius:4px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="report-confirm-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-box" style="max-width:480px;text-align:left;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border);">
+        <div>
+          <div id="confirm-type-label" style="font-size:13px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;"></div>
+          <div id="confirm-timestamp" style="font-size:10px;color:var(--text-muted);margin-top:1px;"></div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px;">
+        <div id="confirm-game-row" style="display:none;">
+          <div style="font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;">Game</div>
+          <div id="confirm-game" style="font-size:12px;color:var(--text);"></div>
+        </div>
+        <div>
+          <div style="font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;">Title</div>
+          <div id="confirm-title" style="font-size:12px;font-weight:600;color:var(--text);"></div>
+        </div>
+        <div id="confirm-author-row" style="display:none;">
+          <div style="font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;">Submitted by</div>
+          <div id="confirm-author" style="font-size:12px;color:var(--text);"></div>
+        </div>
+        <div id="confirm-bugtype-row" style="display:none;">
+          <div style="font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;">Bug Type</div>
+          <div id="confirm-bugtype" style="font-size:12px;color:var(--text);"></div>
+        </div>
+        <div>
+          <div style="font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;">Description</div>
+          <div id="confirm-desc" style="font-size:11px;color:var(--text-dim);line-height:1.6;white-space:pre-wrap;max-height:120px;overflow-y:auto;background:var(--card-bg);border:1px solid var(--border);border-radius:4px;padding:8px 10px;"></div>
+        </div>
+      </div>
+        <div style="font-size:10px;color:var(--red);background:rgba(255,82,82,0.1);border:1px solid var(--red);border-radius:4px;padding:8px 10px;margin-bottom:12px;">
+          ⚑ False, spammed, or abusive reports will get your account permanently banned.
+        </div>
+        <div style="font-size:10px;color:var(--text-muted);margin-bottom:14px;">Does this look right? Hit <strong style="color:var(--text);">SEND</strong> to submit or <strong style="color:var(--text);">CANCEL</strong> to go back and edit.</div>      <div style="display:flex;gap:8px;">
+        <button id="confirm-cancel-btn" style="flex:1;background:var(--card-bg);border:1px solid var(--border);color:var(--text-dim);font-family:var(--font);font-size:11px;font-weight:700;padding:9px;border-radius:4px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;">CANCEL</button>
+        <button id="confirm-send-btn" style="flex:2;background:var(--card-bg);border:1px solid var(--accent);color:var(--accent);font-family:var(--font);font-size:11px;font-weight:700;padding:9px;border-radius:4px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;">SEND</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="delete-account-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-box" style="text-align:left;">
+      <h2 style="color:var(--red);">Delete Account</h2>
+      <p>This permanently deletes your account and playtime stats. This can't be undone. Enter your password to confirm.</p>
+      <input type="password" id="delete-account-password" class="f-input" placeholder="••••••••" autocomplete="off" style="margin-bottom:12px;">
+      <div id="delete-account-status" style="display:none;margin-bottom:10px;"></div>
+      <div style="display:flex;gap:8px;">
+        <button class="modal-btn" style="flex:1;" onclick="closeDeleteAccountModal()">CANCEL</button>
+        <button id="delete-account-confirm-btn" class="modal-btn" style="flex:1;border-color:var(--red);color:var(--red);" onclick="submitDeleteAccount()">DELETE</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="account-required-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-box">
+      <h2>Account Required</h2>
+      <p>You need a free CheddarOS account to play games or use tools. It only takes a few seconds to make one.</p>
+      <button class="modal-btn" style="width:100%;margin-bottom:8px;" onclick="closeAccountRequiredModal(); openAuthModal('register');">CREATE ACCOUNT</button>
+      <button class="modal-btn" style="width:100%;margin-bottom:8px;background:none;" onclick="closeAccountRequiredModal(); openAuthModal('signin');">I ALREADY HAVE ONE</button>
+      <div style="font-size:10px;color:var(--text-dim);cursor:pointer;text-decoration:underline;" onclick="closeAccountRequiredModal()">Cancel</div>
+    </div>
+  </div>
+
+  <div id="welcome-modal" class="modal-overlay">
+    <div class="modal-box">
+      <h2>Welcome to CheddarOS</h2>
+      <div style="font-size:10px;color:var(--text-dim);margin-bottom:12px;" id="welcome-ver"></div>
+      <p>Thank you for using CheddarOS!</p>
+      <button class="modal-btn" style="width:100%;margin-bottom:8px;" onclick="document.getElementById('welcome-modal').style.display='none'">CONTINUE</button>
+      <div style="font-size:10px;color:var(--text-dim)">enjoy</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const OS_VERSION = "v1.0.0";
+const ANNOUNCEMENT_TEXT = "Our Terms of Service have been updated, users assume full legal liability for any material generated with CheddarGPT";
+
+const BUG_REPORT_WEBHOOK = "https://discord.com/api/webhooks/1505005102875021405/WddzzZwkTVqyWFwvEtB-r_e_jR96BPo-kDjMjV-YFtFoMH6wOEFcOfXJMWyvA-c2MRY8";
+const BAN_APPEAL_WEBHOOK = "https://discord.com/api/webhooks/1544517202743394326/VpnZaODkB35Xdow7b64R7wzClvZe_4ZffrfHP0r3MZH7ZKIcBsMhgWjR564ZNI6QGoKk";
+
+const TOS_FALLBACK = "_Couldn't load the Terms of Service. Please refresh or check back later._";
+const TOS_PATH = "/README.md";
+
+const sites = { // "": { name:"", enabled:true, src:"" },
+ "brawl simulator 3d": { name:"Brawl Simulator 3D", enabled:true, src:"brawl-stars" },
+ "moto x3m poolparty": { name:"Moto X3M PoolParty", enabled:true, src:"moto-x3m-poolparty" },
+ "crossy road": { name:"Crossy Road", enabled:true, src:"crossy-roads" },
+ "tiny fishing": { name:"Tiny Fishing", enabled:true, src:"tiny-fishing" },
+ "raft": { name:"Raft", enabled:true, src:"raft" },
+ "moto x3m": { name:"Moto X3M", enabled:true, src:"moto-x3m" },
+ "nitro type": { name:"Nitro Type", enabled:true, src:"nitro-type" },
+ "granny": { name:"Granny", enabled:true, src:"granny" },
+ "flappy dunk": { name:"Flappy Dunk", enabled:true, src:"flappy-dunk" },
+ "flappy bird": { name:"Flappy Bird", enabled:true, src:"flappy-bird" },
+ "clash of vikings": { name:"Clash of Vikings", enabled:true, src:"clash-of-vikings" },
+ "people playground": { name:"People Playground", enabled:true, src:"people-playground" },
+ "flying gorilla": { name:"Flying Gorilla", enabled:true, src:"flying-gorilla" },
+ "gta 3": { name:"Grand Theft Auto III", enabled:true, src:"gta-3" },
+ "peak": { name:"PEAK", enabled:true, src:"peak" },
+ "clustertruck": { name:"ClusterTruck", enabled:true, src:"clustertruck" },
+ "highway racer 2": { name:"Highway Racer 2", enabled:true, src:"highway-racer-2" },
+ "60 seconds": { name:"60 Seconds!", enabled:true, src:"60-seconds" },
+ "baldis basic": { name:"Baldi's Basic", enabled:true, src:"baldis-basic" },
+ "bowmasters": { name:"BOWMASTERS", enabled:true, src:"bowmasters" },
+ "cookie clicker": { name:"Cookie Clicker", enabled:true, src:"cookie-clicker" },
+ "they are coming": { name:"They are Coming", enabled:true, src:"they-are-coming" },
+ "postal": { name:"Postal", enabled:true, src:"postal" },
+ "orange roulette": { name:"Orange Roulette", enabled:true, src:"orange-roulette" },
+ "fnae": { name:"Five Nights at Epstein's", enabled:true, src:"fnae" },
+ "gta vc": { name:"Grand Theft Auto: Vice City", enabled:true, src:"gta-vc" },
+ "plants vs zombies": { name:"Plants VS. Zombies", enabled:true, src:"plants-vs-zombies" },
+ "raft wars 2": { name:"Raft Wars 2", enabled:true, src:"raft-wars-2" },
+ "snow rider": { name:"Snow Rider 3D", enabled:true, src:"snow-rider3d" },
+ "retro bowl": { name:"Retro Bowl", enabled:true, src:"retro-bowl" },
+ "wrestle bros": { name:"Wrestle Bros", enabled:false,src:"wrestle-bros" },
+ "potato": { name:"Throw a Potato", enabled:true, src:"throw-a-potato" },
+ "drift hunters": { name:"Drift Hunters", enabled:true, src:"drift-hunters" },
+ "basketball legends": { name:"Basketball Legends 2020", enabled:false, src:"basketball-legends" },
+ "cheddar clicker": { name:"Cheddar Clicker", enabled:true, src:"cheddar-clicker" },
+ "bloons td4": { name:"Bloons Tower Defense 4", enabled:true, src:"bloons-td4" },
+ "geometry dash": { name:"Geometry Dash Lite", enabled:true, src:"geometry-dash" },
+ "minecraft": { name:"Minecraft v1.8.8", enabled:true, src:"minecraft" },
+ "zombies": { name:"Nazi Zombies", enabled:true, src:"nz-zombies" },
+ "sm64": { name:"Super Mario 64", enabled:true, src:"sm64" },
+ "buckshot": { name:"Buckshot Roulette", enabled:true, src:"buckshot-roulette" },
+ "fnaf": { name:"Five Nights at Freddy's", enabled:true, src:"fnaf1" },
+ "fnaf2": { name:"Five Nights at Freddy's 2", enabled:true, src:"fnaf2" },
+ "fnaf3": { name:"Five Nights at Freddy's 3", enabled:false, src:"fnaf3" },
+ "fnaf4": { name:"Five Nights at Freddy's 4", enabled:true, src:"fnaf4" },
+ "cheese rolling": { name:"Cheese Rolling", enabled:true, src:"cheeserolling" },
+ "getting over it": { name:"Getting Over It", enabled:true, src:"getting-over-it" },
+ "learn to fly 3": { name:"Learn to Fly 3", enabled:true, src:"learn-to-fly3" },
+ "escape road": { name:"Escape Road", enabled:true, src:"escape-road" },
+ "adventure capitalist": { name:"AdVenture Capitalist!", enabled:true, src:"adventure-capitalist" },
+ "backrooms": { name:"Backrooms", enabled:true, src:"backrooms" },
+ "bloons td5": { name:"Bloons Tower Defense 5", enabled:true, src:"bloons-td5" },
+ "idle breakout": { name:"Idle Breakout", enabled:true, src:"idle-breakout" },
+};
+const tools = { // "": { name:"", enabled:true, dev:false, early:false, src:"" },
+  "ide": { name:"Cheddar IDE", enabled:true, dev:true, src:"ide" },
+  "cheddar gpt": { name:"CheddarGPT", enabled:true, early:true, src:"gpt" },
+  "hdmi port": { name:"HDMI Port", enabled:true, dev:false, src:"hdmi-port" },
+  "developer console": { name:"Developer Console", enabled:true, dev:true, src:"dev-console" },
+  "asset stealer": { name:"CheddarOS Asset Stealer", enabled:true, dev:true, src:"asset-fetcher" },
+  "proxy": { name:"CheddarOS Proxy", enabled:true, dev:true, src:"proxy" },
+};
+const changelogData = [ // { ver:"v", date:"", items:[""] },
+ { ver:"v1.0.0", date:"9/08/2026", items:["CheddarOS officially released","Added 23 new games","Made the game icons appear next to the game in the sidebar","Popular games are now based of statistic from users","You can now view when a user is online, offline, or ingame","Added quick links so you can click a user inside the credits to go to their profile","Moved the info inside the credits","Added some account settings inside the Settings tab","Started core logic for CheddarOS Browser","Changed the style so its more simple looking","Made CheddarGPT Private access","Removed the support tab","Added a quick report button inside the all game pages for quick and easy bug reports","Added an account system for easier data saving when changing links and stat checking","Removed the Info tab and merged it into Credits","Added a Terms of Service","Added an All Accounts directory to the Users tab"] },
+ { ver:"vBETA-1.3.3", date:"5/22/2026", items:["Added Plants VS. Zombies"] },
+ { ver:"vBETA-1.3.2", date:"5/21/2026", items:["Added Raft Wars 2","Fixed Snow Rider 3D"] },
+ { ver:"vBETA-1.3.1b", date:"5/20/2026", items:["Bypassed for Minecraft and changed its version from 1.12.2 > 1.8.8"] },
+ { ver:"vBETA-1.3.1", date:"5/19/2026", items:["Added Idle Breakout","Finally fixed Getting Over It and its playable again","Added Bloons TD5","Added AdVenture Capitalist","Added Backrooms","Added bypass for Escape Road"] },
+ { ver:"vBETA-1.3.0", date:"5/15/2026", items:["Added a support tab so you can make report and suggestions for CheddarOS","Added custom themes and tab names","Added display settings like hide offline games and show pretty names for all games and tools","Added a counter for how long you have played games"] },
+ { ver:"vBETA-1.2.0", date:"4/29/2026", items:["Bypassed blocking about:blank links"] },
+ { ver:"vBETA-1.1.1", date:"4/22/2026", items:["Added a Settings tab to change how you prefer CheddarOS","Added Recently played games right under the popular games inside the Home Page","You can now pin your favorite games to the top of the games tab"] },
+ { ver:"vBETA-1.1.0", date:"4/21/2026", items:["Bypassed again","Completely changed how CheddarOS is injected","Revamped the download page where you download CheddarOS","CheddarOS is now unblockable by ","Added Escape Road"] },
+ { ver:"vBETA-1.0.5", date:"4/19/2026", items:["Added a HDMI Port meant for Chromebooks","Added Orange Roulette"] },
+ { ver:"vBETA-1.0.4", date:"4/15/2026", items:["CheddarOS bypass","Made the pre-load a lot faster","Added GTA: Vice City"] },
+ { ver:"vBETA-1.0.3", date:"4/13/2026", items:["Added Cheese Rolling","Added Getting Over It","Added Learn to Fly 3","Added a search bar to help find all games and tools","Added descriptions to the games now with recommendations and controls"] },
+ { ver:"vBETA-1.0.2", date:"4/02/2026",  items:["Added a little welcome message every time you open the app","Added a pre-load so everything can load smoothly without lag and or delay"] },
+ { ver:"vBETA-1.0.1", date:"3/31/2026", items:["Offically went public!","Added FNaF 1-4","CheddarGPT is under maintaince while I fix the API"] },
+ { ver:"vBETA-1.0.0", date:"3/30/2026", items:["CheddarOS whitelist is now working","Revamped UI","Removed the console commands entirely","Added CheddarGPT","Added Cheddar Form Cracker (instructions inside)"] },
+ { ver:"vBETA-1.0.0", date:"3/17/2026", items:["Finally out of alpha and into open beta","Revamped UI again to be more unique","Console, games, and the password are now under 1 tab","Welcoming new testers to CheddarOS"] },
+ { ver:"vALPHA-2.1.3",  date:"3/14/2026", items:["Fixed Bloons TD4"] },
+ { ver:"vALPHA-2.1.2",  date:"3/13/2026", items:["Added Bloons TD4","Fixed formatting","Minor bug fixes"] },
+ { ver:"vALPHA-2.1.1",  date:"3/11/2026", items:["Added Basketball Legends","Basketball Legends offline while looking for bypass"] },
+ { ver:"vALPHA-2.1.0",  date:"3/09/2026",  items:["Completely changed how games load","Games load faster than ever","Reduced lag in every game and inside CheddarOS","Fixed bypass for Buckshot Roulette","Shell Shockers removed"] },
+ { ver:"vALPHA-2.0.3",  date:"3/08/2026",  items:["Added Drift Hunters"] },
+ { ver:"vALPHA-2.0.2",  date:"3/07/2026",  items:["Added an info command to see more information about CheddarOS"] },
+ { ver:"vALPHA-2.0.1",  date:"3/07/2026",  items:["Formatted the games and the help list to look more professional","Added an announcement text","Minor bug fixes"] },
+ { ver:"vALPHA-2.0.0",  date:"3/04/2026",  items:["Completely revamped the UI","Changed tab name and icon"] },
+ { ver:"vALPHA-1.1.0",  date:"2/27/2026", items:["Massive Code Cleanup"] },
+ { ver:"vALPHA-1.0.10", date:"2/27/2026", items:["Added Buckshot Roulette"] },
+ { ver:"vALPHA-1.0.9",  date:"2/27/2026", items:["Added Wrestle Bros"] },
+ { ver:"vALPHA-1.0.8",  date:"2/27/2026", items:["Formatted the credits screen"] },
+ { ver:"vALPHA-1.0.7",  date:"2/26/2026", items:["Added Shell Shockers"] },
+ { ver:"vALPHA-1.0.6",  date:"2/26/2026", items:["Added Retro Bowl"] },
+ { ver:"vALPHA-1.0.5b", date:"2/26/2026", items:["Minor bug fixes","Cut the loading speed in half"] },
+ { ver:"vALPHA-1.0.5",  date:"2/25/2026", items:["Throw a Potato fixed","Removed ads","FNaE revamp","Fixed Snow Rider 3D black screen"] },
+ { ver:"vALPHA-1.0.4",  date:"2/25/2026", items:["FNaE back online"] },
+ { ver:"vALPHA-1.0.3",  date:"2/25/2026", items:["FNaE taken offline","Throw a Potato offline"] },
+ { ver:"vALPHA-1.0.2",  date:"2/23/2026", items:["Minor fixes","Throw a Potato playable","Added Snow Rider 3D (WIP)"] },
+ { ver:"vALPHA-1.0.1",  date:"2/23/2026", items:["Throw a Potato maintenance"] },
+ { ver:"vALPHA-1.0.0",  date:"2/23/2026", items:["CheddarOS early private access release"] },
+];
+const creditsData = [ // { role:"", people:[ { isUser:true, account:"" } ] },
+  { role:"LEAD DEVELOPER", people:[{ isUser:true, account:"cheddar" }] },
+  { role:"CONTRIBUTORS", people:[{ isUser:true, account:"brokemyp80" },{ isUser:true, account:"joeronster" }] },
+  { role:"TESTERS", people:[{ isUser:true, account:"chahasey" },{ isUser:true, account:"xotiic" },{ isUser:true, account:"jjhaubs" }] },
+];
+const creditsDisclaimer = "All Testers and Contributors are not affiliated in any way with the development of CheddarOS.";
+
+document.getElementById("logo-ver").textContent = OS_VERSION;
+document.getElementById("home-ver").textContent = OS_VERSION;
+document.getElementById("info-ver").textContent = OS_VERSION;
+document.getElementById("welcome-ver").textContent = OS_VERSION;
+
+if (ANNOUNCEMENT_TEXT.trim()) {
+  const nb = document.getElementById("notice-bar");
+  nb.style.display = "block";
+  nb.textContent = "[NOTICE] " + ANNOUNCEMENT_TEXT;
+}
+
+const getGameDir = () => `/games`;
+const getToolDir = () => `/tools`;
+const getThemesDir = () => `/themes`;
+
+const launchSel = document.getElementById("launch-mode-select");
+launchSel.value = localStorage.getItem("cheddaros-launch") || "tab";
+launchSel.addEventListener("change", e => localStorage.setItem("cheddaros-launch", e.target.value));
+const getLaunchMode = () => localStorage.getItem("cheddaros-launch") || "tab";
+
+const skipWelcomeToggle = document.getElementById("skip-welcome-toggle");
+skipWelcomeToggle.checked = localStorage.getItem("cheddaros-skip-welcome") === "1";
+skipWelcomeToggle.addEventListener("change", e => {
+  localStorage.setItem("cheddaros-skip-welcome", e.target.checked ? "1" : "0");
+});
+if (localStorage.getItem("cheddaros-skip-welcome") === "1") {
+  document.getElementById("welcome-modal").style.display = "none";
+}
+
+const hideOfflineToggle = document.getElementById("hide-offline-toggle");
+hideOfflineToggle.checked = localStorage.getItem("cheddaros-hide-offline") === "1";
+hideOfflineToggle.addEventListener("change", e => {
+  localStorage.setItem("cheddaros-hide-offline", e.target.checked ? "1" : "0");
+  applyHideOffline();
+});
+function applyHideOffline() {
+  const hide = localStorage.getItem("cheddaros-hide-offline") === "1";
+  const sec = document.getElementById("offline-section");
+  if (sec) sec.style.display = hide ? "none" : "";
+}
+
+const prettyNamesToggle = document.getElementById("pretty-names-toggle");
+prettyNamesToggle.checked = localStorage.getItem("cheddaros-pretty-names") === "1";
+prettyNamesToggle.addEventListener("change", e => {
+  localStorage.setItem("cheddaros-pretty-names", e.target.checked ? "1" : "0");
+  buildSidebar();
+  rebuildFavSidebar();
+});
+const getPrettyNames = () => localStorage.getItem("cheddaros-pretty-names") === "1";
+
+function applyTheme(theme) {
+  document.body.className = theme === "dark" ? "" : `theme-${theme}`;
+  localStorage.setItem("cheddaros-theme", theme);
+  document.querySelectorAll(".theme-option").forEach(el => {
+    el.classList.toggle("selected", el.dataset.theme === theme);
+  });
+}
+const savedTheme = localStorage.getItem("cheddaros-theme") || "dark";
+applyTheme(savedTheme);
+document.querySelectorAll(".theme-option").forEach(el => {
+  el.addEventListener("click", () => applyTheme(el.dataset.theme));
+});
+
+function clamp(v, min, max) { return Math.min(max, Math.max(min, v)); }
+function hexToRgb(hex) {
+  const clean = hex.replace('#', '');
+  const full = clean.length === 3 ? clean.split('').map(c=>c+c).join('') : clean;
+  return { r:parseInt(full.slice(0,2),16), g:parseInt(full.slice(2,4),16), b:parseInt(full.slice(4,6),16) };
+}
+function rgbToHex(r,g,b) { return '#'+[r,g,b].map(v=>clamp(v,0,255).toString(16).padStart(2,'0')).join(''); }
+function darkenColor(hex, amount=0.22) {
+  const {r,g,b}=hexToRgb(hex);
+  return rgbToHex(Math.round(r*amount), Math.round(g*amount), Math.round(b*amount));
+}
+function applyNoticeColor(color) {
+  const darkBg = darkenColor(color, 0.22);
+  document.documentElement.style.setProperty('--notice-border', color);
+  document.documentElement.style.setProperty('--notice-text', color);
+  document.documentElement.style.setProperty('--notice-bg', darkBg);
+  const prev = document.getElementById("notice-preview");
+  if (prev) {
+    prev.style.color = color;
+    prev.style.borderColor = color;
+    prev.style.background = darkBg;
+  }
+}
+
+const noticeColorPicker = document.getElementById("notice-color-picker");
+const savedNoticeColor = localStorage.getItem("cheddaros-notice-color") || "#ffffff";
+noticeColorPicker.value = savedNoticeColor;
+applyNoticeColor(savedNoticeColor);
+noticeColorPicker.addEventListener("input", e => {
+  const color = e.target.value;
+  localStorage.setItem("cheddaros-notice-color", color);
+  applyNoticeColor(color);
+});
+document.getElementById("reset-cloak-btn").onclick = () => {
+  localStorage.removeItem("cheddaros-notice-color");
+  localStorage.removeItem("cheddaros-theme");
+  noticeColorPicker.value = "#ffffff";
+  applyNoticeColor("#ffffff");
+  applyTheme("dark");
+};
+
+const getFavs = () => { try { return JSON.parse(localStorage.getItem("cheddaros-favs")||"[]"); } catch { return []; } };
+const setFavs = a => localStorage.setItem("cheddaros-favs", JSON.stringify(a));
+
+function toggleFav(key) {
+  let f = getFavs();
+  f = f.includes(key) ? f.filter(k=>k!==key) : [...f, key];
+  setFavs(f);
+  rebuildFavSidebar();
+  renderFavBtn(key);
+}
+
+function renderFavBtn(key) {
+  const btn = document.getElementById("game-fav-btn");
+  const on = getFavs().includes(key);
+  btn.textContent = on ? "★" : "☆";
+  btn.style.color = on ? "var(--yellow)" : "var(--text-dim)";
+}
+
+function rebuildFavSidebar() {
+  const favs = getFavs();
+  const sec  = document.getElementById("fav-section");
+  const div  = document.getElementById("fav-divider");
+  const cont = document.getElementById("fav-sidebar");
+  cont.innerHTML = "";
+  if (!favs.length) { sec.style.display="none"; div.style.display="none"; return; }
+  sec.style.display=""; div.style.display="";
+  const pretty = getPrettyNames();
+favs.forEach(key => {
+    const s = sites[key]; if (!s) return;
+    const btn = document.createElement("button");
+    btn.className = "sidebar-item fav-item";
+    btn.dataset.key = key;
+    btn.innerHTML = `<span style="flex-shrink:0;">★</span><img class="sidebar-item-icon" src="${getGameDir()}/${s.src}/icon.png" onerror="this.style.display='none'" alt=""><span class="sidebar-item-label">${pretty ? s.name : key}</span>`;
+    btn.onclick = () => showGame(key);
+    cont.appendChild(btn);
+});
+}
+
+const getRecent = () => { try { return JSON.parse(localStorage.getItem("cheddaros-recent")||"[]"); } catch { return []; } };
+function pushRecent(key) {
+  let r = getRecent().filter(k=>k!==key);
+  r.unshift(key); r = r.slice(0,4);
+  localStorage.setItem("cheddaros-recent", JSON.stringify(r));
+  buildRecentGrid();
+}
+
+function buildRecentGrid() {
+  const recent = getRecent().filter(k => sites[k]?.enabled);
+  const wrap = document.getElementById("recent-wrap");
+  const grid = document.getElementById("recent-grid");
+  if (!wrap||!grid) return;
+  if (!recent.length) { wrap.style.display="none"; return; }
+  wrap.style.display="";
+  grid.innerHTML="";
+  recent.forEach(key => {
+    const s = sites[key];
+    const c = document.createElement("div"); c.className="popular-card";
+    c.innerHTML=`<div class="card-img"><img src="${getGameDir()}/${s.src}/icon.png" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="no-img" style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:9px;color:var(--text-muted)">No img</div></div><div class="card-label">${s.name}</div>`;
+    c.onclick=()=>showGame(key); grid.appendChild(c);
+  });
+}
+
+const PLAYTIME_KEY = "cheddaros-playtime";
+function getPlaytimeData() { try { return JSON.parse(localStorage.getItem(PLAYTIME_KEY) || "{}"); } catch { return {}; } }
+function savePlaytimeData(data) { localStorage.setItem(PLAYTIME_KEY, JSON.stringify(data)); }
+function getPlaytimeMins(key) { return getPlaytimeData()[key] || 0; }
+function addPlaytime(key, minutes) {
+  if (minutes < 0.1) return;
+  const data = getPlaytimeData();
+  data[key] = parseFloat(((data[key] || 0) + minutes).toFixed(2));
+  savePlaytimeData(data);
+}
+function formatPlaytime(totalMins) {
+  if (totalMins < 1)   return "0 min";
+  if (totalMins < 100) return `${Math.round(totalMins)} mins`;
+  return `${(totalMins / 60).toFixed(1)} hrs`;
+}
+async function syncPlaytimeToServer(gameKey, minutes) {
+  if (minutes < 0.1) return;
+  const session = getSession();
+  if (!session) return;
+  try {
+    await fetch("/api/playtime", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: session.userId, game: gameKey, minutes }),
+    });
+  } catch {}
+}
+
+function renderPlaytime(key) {
+  const old = document.getElementById("playtime-badge");
+  if (old) old.remove();
+  const mins = getPlaytimeMins(key);
+  const badge = document.createElement("div");
+  badge.id = "playtime-badge";
+  badge.style.cssText = "display:inline-flex;align-items:center;gap:6px;background:var(--card-bg);border:1px solid var(--border);border-radius:4px;padding:4px 10px;font-size:11px;color:var(--text-dim);margin-bottom:8px;font-family:var(--font);";
+  badge.innerHTML = `<span style="color:var(--accent);font-size:13px;">⏱</span><span><strong style="color:var(--text);">${formatPlaytime(mins)}</strong><span style="color:var(--text-muted);"> on record</span></span>`;
+  const area = document.getElementById("game-desc-area");
+  if (area) area.prepend(badge);
+}
+
+function isDeveloper() {
+  const session = getSession();
+  return !!(session && session.isDeveloper);
+}
+
+// Developers get automatic Early Supporter perks too -- they're a superset,
+// not a separate track. Actual granted flag is what shows the gold badge
+// though; see badgeHtml() usages, which check session.isEarlyAccess directly.
+function isEarlyAccess() {
+  const session = getSession();
+  return !!(session && (session.isEarlyAccess || session.isDeveloper));
+}
+
+function canAccessTool(t) {
+  if (t.dev && !isDeveloper()) return false;
+  if (t.early && !isEarlyAccess()) return false;
+  return true;
+}
+
+// Shared badge markup so every render site (account button, profile page,
+// all-users list) stays in sync. Uses data-tooltip + a single global
+// tooltip element (see setupBadgeTooltips below) instead of the native
+// title attribute -- title's built-in "?" cursor icon was showing up before
+// our own tooltip rendered, and a per-badge CSS ::after tooltip could get
+// clipped by whichever scrollable container the badge happened to sit in.
+function badgeHtml(type, size) {
+  if (type === "dev")   return `<span class="holo-badge dev-badge" data-tooltip="Developer" style="font-size:${size}px;">⌘</span>`;
+  if (type === "early") return `<span class="holo-badge gold-badge" data-tooltip="Early Supporter" style="font-size:${size}px;">✦</span>`;
+  return "";
+}
+
+// Renders the tooltip for any .holo-badge in a fixed-position element
+// appended to <body>, so it's never clipped by a scrollable/overflow
+// ancestor. Positions above the badge by default, flips below if there
+// isn't enough room above (e.g. a badge near the top of a scrolled panel).
+let _badgeTooltipEl = null;
+function getBadgeTooltipEl() {
+  if (!_badgeTooltipEl) {
+    _badgeTooltipEl = document.createElement("div");
+    _badgeTooltipEl.className = "global-badge-tooltip";
+    document.body.appendChild(_badgeTooltipEl);
+  }
+  return _badgeTooltipEl;
+}
+function positionBadgeTooltip(target) {
+  const tip = getBadgeTooltipEl();
+  const rect = target.getBoundingClientRect();
+  const left = rect.left + rect.width / 2;
+  const spaceAbove = rect.top;
+  if (spaceAbove < 28) {
+    tip.style.left = `${left}px`;
+    tip.style.top = `${rect.bottom + 8}px`;
+    tip.style.transform = "translate(-50%, 0)";
+  } else {
+    tip.style.left = `${left}px`;
+    tip.style.top = `${rect.top - 8}px`;
+    tip.style.transform = "translate(-50%, -100%)";
+  }
+}
+function setupBadgeTooltips() {
+  document.addEventListener("mouseover", e => {
+    const badge = e.target.closest(".holo-badge[data-tooltip]");
+    if (!badge) return;
+    const tip = getBadgeTooltipEl();
+    tip.textContent = badge.dataset.tooltip;
+    positionBadgeTooltip(badge);
+    tip.classList.add("visible");
+  });
+  document.addEventListener("mouseout", e => {
+    const badge = e.target.closest(".holo-badge[data-tooltip]");
+    if (!badge) return;
+    getBadgeTooltipEl().classList.remove("visible");
+  });
+  // Re-clamp position on scroll (any scrollable ancestor) so it tracks the badge.
+  document.addEventListener("scroll", () => {
+    const tip = _badgeTooltipEl;
+    if (tip && tip.classList.contains("visible")) tip.classList.remove("visible");
+  }, true);
+}
+setupBadgeTooltips();
+
+function buildSidebar() {
+  const gEl = document.getElementById("games-sidebar");
+  const oEl = document.getElementById("offline-sidebar");
+  const tEl = document.getElementById("tools-sidebar");
+  gEl.innerHTML=""; oEl.innerHTML=""; tEl.innerHTML="";
+  const pretty = getPrettyNames();
+
+Object.entries(sites).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([key,s]) => {
+    const btn = document.createElement("button");
+    btn.className = "sidebar-item" + (s.enabled ? "" : " offline");
+    btn.dataset.key = key;
+    const shortLabel = pretty ? s.name : key;
+    const longLabel  = s.name;
+    btn.innerHTML = `<img class="sidebar-item-icon" src="${getGameDir()}/${s.src}/icon.png" onerror="this.style.display='none'" alt=""><span class="sidebar-item-label">${shortLabel}</span>`;
+    if (!pretty) {
+      const labelEl = btn.querySelector(".sidebar-item-label");
+      btn.addEventListener("mouseenter", () => { labelEl.textContent = longLabel; });
+      btn.addEventListener("mouseleave", () => { labelEl.textContent = shortLabel; });
+    }
+    btn.onclick = () => showGame(key);
+    (s.enabled ? gEl : oEl).appendChild(btn);
+});
+
+  Object.entries(tools).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([key,t]) => {
+    if (!canAccessTool(t)) return;
+    const btn = document.createElement("button");
+    btn.className = "sidebar-item" + (t.enabled ? "" : " offline");
+    btn.dataset.key = key;
+    const shortLabel = pretty ? t.name : key;
+    const longLabel  = t.name;
+    btn.textContent = shortLabel;
+    if (!pretty) {
+      btn.addEventListener("mouseenter", () => { btn.textContent = longLabel; });
+      btn.addEventListener("mouseleave", () => { btn.textContent = shortLabel; });
+    }
+    btn.onclick = () => showTool(key);
+    tEl.appendChild(btn);
+  });
+
+  applyHideOffline();
+}
+
+async function buildPopularGrid() {
+  const grid = document.getElementById("popular-grid"); if (!grid) return;
+  grid.innerHTML = "";
+
+  let keys = [];
+  try {
+    const res = await fetch("/api/popular");
+    if (res.ok) {
+      const data = await res.json();
+      keys = (data.games || [])
+        .map(g => g.game_key)
+        .filter(k => sites[k]?.enabled);
+    }
+  } catch {}
+
+  keys.forEach(key => {
+    const s = sites[key];
+    const c = document.createElement("div"); c.className = "popular-card";
+    c.innerHTML = `<div class="card-img"><img src="${getGameDir()}/${s.src}/icon.png" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="no-img" style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:9px;color:var(--text-muted)">No img</div></div><div class="card-label">${s.name}</div>`;
+    c.onclick = () => showGame(key); grid.appendChild(c);
+  });
+}
+
+function buildChangelogs() {
+  const el=document.getElementById("changelog-list");
+  changelogData.forEach(e=>{
+    const d=document.createElement("div"); d.className="cl-entry";
+    d.innerHTML=`<span class="cl-ver">${e.ver}</span><span class="cl-date">${e.date}</span><ul class="cl-items">${e.items.map(i=>`<li>${i}</li>`).join('')}</ul>`;
+    el.appendChild(d);
+  });
+}
+
+function buildHomePreview() {
+  const e=changelogData[0], el=document.getElementById("home-changelog-preview");
+  el.innerHTML=`<div class="changelog-entry"><span class="entry-ver">${e.ver}</span><span class="entry-date">${e.date}</span><ul>${e.items.map(i=>`<li>${i}</li>`).join('')}</ul></div>`;
+}
+
+async function loadReadme() {
+  const readmeEl = document.getElementById("readme-content");
+  const tosModalEl = document.getElementById("tos-modal-content");
+  let markdown;
+  try {
+    const res = await fetch(TOS_PATH);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    markdown = await res.text();
+  } catch (err) {
+    const failHtml = `
+      <div style="color:var(--red); font-weight: 700;">Failed to load Terms of Service</div>
+      <div style="font-size:10px; color:var(--text-muted); margin-top:4px;">${err.message}</div>
+    `;
+    readmeEl.innerHTML = failHtml;
+    if (tosModalEl) tosModalEl.innerHTML = failHtml;
+    return;
+  }
+  const rendered = (typeof marked !== "undefined")
+    ? marked.parse(markdown)
+    : `<pre style="white-space: pre-wrap;">${markdown}</pre>`;
+  readmeEl.innerHTML = rendered;
+  if (tosModalEl) tosModalEl.innerHTML = rendered;
+}
+
+function openTosModal() {
+  document.getElementById("tos-modal").style.display = "flex";
+}
+function closeTosModal() {
+  document.getElementById("tos-modal").style.display = "none";
+}
+document.getElementById("tos-close-btn").onclick = closeTosModal;
+
+let _creditBadgeSeq = 0;
+const _pendingCreditVerifications = [];
+function renderCreditVerifyBadge(account) {
+  const id = `credit-badge-${_creditBadgeSeq++}`;
+  _pendingCreditVerifications.push({ id, account });
+  return `<span id="${id}" style="color:var(--text-muted);">@${escapeHtml(account)}</span>`;
+}
+
+async function verifyCreditUser(badgeId, account) {
+  const badge = document.getElementById(badgeId);
+  if (!badge) return;
+  try {
+    const res = await fetch(`/api/lookup?username=${encodeURIComponent(account)}`);
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    badge.outerHTML = `<span style="color:var(--accent);text-decoration:underline;cursor:pointer;" onclick="viewUserProfile('${escapeHtml(account)}')">@${escapeHtml(data.username)}</span>`;
+  } catch {
+    badge.style.color = "var(--red)";
+    badge.title = "Couldn't verify this account.";
+  }
+}
+
+function buildCredits() {
+  const el=document.getElementById("credits-content");
+  creditsData.forEach(s=>{
+    const d=document.createElement("div"); d.className="credits-section";
+    const itemsHtml = s.people.map(p => {
+      if (typeof p === "object" && p.isUser && p.account) {
+        return `<li>${renderCreditVerifyBadge(p.account)}</li>`;
+      }
+      const label = typeof p === "object" ? p.name : p;
+      return `<li>${escapeHtml(label)}</li>`;
+    }).join('');
+    d.innerHTML=`<div class="credits-role">${s.role}</div><ul class="credits-people">${itemsHtml}</ul>`;
+    el.appendChild(d);
+  });
+  const disc=document.createElement("div"); disc.className="credits-disclaimer"; disc.textContent=creditsDisclaimer; el.appendChild(disc);
+
+  _pendingCreditVerifications.forEach(({ id, account }) => verifyCreditUser(id, account));
+  _pendingCreditVerifications.length = 0;
+}
+
+const searchInput=document.getElementById('game-search'), searchDropdown=document.getElementById('search-dropdown');
+let selIdx=-1, selResults=[];
+searchInput.addEventListener('input',()=>renderDropdown(searchInput.value.toLowerCase().trim()));
+function renderDropdown(q) {
+  searchDropdown.innerHTML=""; selResults=[]; selIdx=-1;
+  if(!q){searchDropdown.style.display="none";return;}
+  const gR=Object.keys(sites).filter(k=>sites[k].enabled&&k.includes(q)).sort();
+  const oR=Object.keys(sites).filter(k=>!sites[k].enabled&&k.includes(q)).sort();
+  const tR=Object.keys(tools).filter(k=>canAccessTool(tools[k])&&k.includes(q)).sort();
+  if(!gR.length&&!oR.length&&!tR.length){
+    searchDropdown.style.display="block";
+    searchDropdown.innerHTML=`<div style="padding:8px 10px;color:var(--red);font-size:11px;text-align:center">No results for "${q}"</div>`;
+    return;
+  }
+  searchDropdown.style.display="block";
+  const addSec=(title,keys,type)=>{
+    if(!keys.length)return;
+    const h=document.createElement("div");
+    h.style.cssText="padding:5px 8px;background:#000;color:var(--accent);font-size:10px;font-weight:800;border-bottom:1px solid var(--border)";
+    h.textContent=title; searchDropdown.appendChild(h);
+    keys.forEach(key=>{
+      const it=document.createElement("div");
+      it.className="sidebar-item"+(type==='offline'?" offline":"");
+      it.textContent=key; it.style.paddingLeft="18px"; it.style.fontSize="11px";
+      selResults.push({key,type});
+      it.onclick=()=>{type==='tool'?showTool(key):showGame(key);closeSearch();};
+      searchDropdown.appendChild(it);
+    });
+  };
+  addSec("GAMES",gR,'game'); addSec("TOOLS",tR,'tool'); addSec("OFFLINE",oR,'offline');
+}
+function closeSearch(){searchInput.value="";searchDropdown.style.display="none";selIdx=-1;}
+searchInput.addEventListener('keydown',e=>{
+  const items=searchDropdown.querySelectorAll('.sidebar-item');
+  if(e.key==="ArrowDown"){e.preventDefault();selIdx=Math.min(selIdx+1,items.length-1);updSel(items);items[selIdx]?.scrollIntoView({block:'nearest'});}
+  else if(e.key==="ArrowUp"){e.preventDefault();selIdx=Math.max(selIdx-1,0);updSel(items);items[selIdx]?.scrollIntoView({block:'nearest'});}
+  else if(e.key==="Enter"&&selIdx>-1)items[selIdx].click();
+  else if(e.key==="Escape")closeSearch();
+});
+function updSel(items){items.forEach((it,i)=>it.classList.toggle('active',i===selIdx));}
+document.addEventListener('click',e=>{if(!e.target.closest('#sidebar'))closeSearch();});
+
+function showTab(tab) {
+  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.getElementById("game-page").classList.remove("active");
+  document.getElementById("tool-page").classList.remove("active");
+  document.getElementById("user-page").classList.remove("active");
+  document.getElementById(`page-${tab}`)?.classList.add("active");
+  document.querySelectorAll(".sidebar-item").forEach(b=>b.classList.remove("active"));
+  if (tab === "settings") syncAccountSettingsUI();
+  if (tab === "users") buildAllUsersList();
+}
+document.querySelectorAll(".nav-btn").forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+
+async function showGame(key) {
+  const s=sites[key];
+  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.getElementById("tool-page").classList.remove("active");
+  document.getElementById("user-page").classList.remove("active");
+  document.getElementById("game-page").classList.add("active");
+  document.querySelectorAll(".sidebar-item").forEach(b=>b.classList.toggle("active",b.dataset.key===key));
+
+  const bannerEl=document.getElementById("game-banner");
+  bannerEl.innerHTML=`<img src="${getGameDir()}/${s.src}/banner.png" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt=""><div class="no-banner" style="display:none">No image</div>`;
+
+  const ico=document.getElementById("game-icon-sm");
+  ico.src=`${getGameDir()}/${s.src}/icon.png`; ico.style.display="";
+  document.getElementById("game-name-bar").textContent=s.name;
+
+  renderFavBtn(key);
+  const favBtn=document.getElementById("game-fav-btn");
+  favBtn.onclick=()=>toggleFav(key);
+
+  const descArea=document.getElementById("game-desc-area");
+  const adArea=document.getElementById("game-ad-area");
+  const playBtn=document.getElementById("game-play-btn");
+
+  if(!s.enabled){
+    descArea.innerHTML=`<div class="game-offline-notice">'${s.name}' is not currently available.<br>This game has been taken offline. Please check back next update.</div>`;
+    adArea.innerHTML="";
+    playBtn.disabled=true; playBtn.style.opacity="0.4"; favBtn.style.display="none";
+  } else {
+favBtn.style.display="";
+    descArea.innerHTML=`<div class="game-desc-box readme-content">Loading description...</div>`;
+    adArea.innerHTML=`<div class="game-ad-slot"></div>`;
+    renderPlaytime(key);
+    try {
+      const r=await fetch(`${getGameDir()}/${s.src}/desc.md`);
+      const text = r.ok ? await r.text() : (s.desc||"");
+      descArea.querySelector(".game-desc-box").innerHTML = (typeof marked !== "undefined") ? marked.parse(text) : text;
+    } catch { descArea.querySelector(".game-desc-box").textContent = s.desc||""; }
+    playBtn.disabled=false; playBtn.style.opacity="1";
+  }
+  playBtn.onclick=s.enabled?()=>launchGame(key):null;
+}
+
+function showTool(key) {
+  if (!isLoggedIn()) { showAccountRequiredModal(); return; }
+  const t=tools[key];
+  if (t.dev && !isDeveloper()) {
+    alert("This tool requires developer access.");
+    return;
+  }
+  if (t.early && !isEarlyAccess()) {
+    alert("This tool requires Early Supporter access.");
+    return;
+  }
+  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.getElementById("game-page").classList.remove("active");
+  document.getElementById("user-page").classList.remove("active");
+  document.getElementById("tool-page").classList.add("active");
+  document.querySelectorAll(".sidebar-item").forEach(b=>b.classList.toggle("active",b.dataset.key===key));
+  const wrap=document.querySelector(".tool-frame-wrap");
+  wrap.innerHTML=`<div class="tool-placeholder">Loading ${t.name}...</div>`;
+  if(!t.enabled){wrap.innerHTML=`<div class="tool-placeholder" style="color:var(--red)">${t.name} is currently disabled.</div>`;return;}
+  const base=`${getToolDir()}/${t.src}/`;
+  fetch(`${base}index.html`).then(r=>{if(!r.ok)throw new Error(`HTTP ${r.status}`);return r.text();})
+    .then(html=>{
+      const blob=new Blob([`<head><base href="${base}"></head>`+html],{type:'text/html'});
+      const fr=document.createElement("iframe"); fr.style.cssText="width:100%;height:100%;border:none;background:var(--card-bg);";
+      fr.src=URL.createObjectURL(blob); wrap.innerHTML=""; wrap.appendChild(fr);
+    }).catch(e=>{wrap.innerHTML=`<div class="tool-placeholder" style="color:var(--red)">Error: ${e.message}</div>`;});
+}
+
+function launchGame(key) {
+  if (!isLoggedIn()) { showAccountRequiredModal(); return; }
+  const s=sites[key], url=`${getGameDir()}/${s.src}/index.html`, mode=getLaunchMode();
+  pushRecent(key);
+  activeGameKey = key;
+  sendHeartbeat();
+  const feats=mode==="window"?"width=1280,height=720,toolbar=no,menubar=no,scrollbars=no,resizable=yes":undefined;
+  const win=feats?window.open(`about:blank#cheddar/${s.src}`,'_blank',feats):window.open(`about:blank#cheddar/${s.src}`,'_blank');
+  activeGameWindow = win;
+  const html=`<!DOCTYPE html><html><head><title>injecting the cheddar</title><style>body,html{margin:0;padding:0;height:100%;overflow:hidden;background:#000;}</style></head><body><script>
+fetch('${url}').then(r=>{if(!r.ok)throw 0;return r.text();}).then(d=>{document.open();document.write(d);document.close();}).catch(()=>{document.body.innerHTML='<div style="color:white;text-align:center;padding:20px;font-family:sans-serif;">Failed to load.</div>';});
+<\/script></body></html>`;
+  win.document.open(); win.document.write(html); win.document.close();
+
+  const startTime = Date.now();
+
+  const liveUpdateInterval = setInterval(() => {
+    const elapsedMins = (Date.now() - startTime) / 60000;
+    const badge = document.getElementById("playtime-badge");
+    if (!badge) return;
+    const stored = getPlaytimeMins(key);
+    const total = stored + elapsedMins;
+    const strong = badge.querySelector("strong");
+    if (strong) strong.textContent = formatPlaytime(total);
+  }, 30000);
+
+  const pollInterval = setInterval(() => {
+if (win.closed) {
+      clearInterval(pollInterval);
+      clearInterval(liveUpdateInterval);
+      activeGameKey = null;
+      activeGameWindow = null;
+      sendHeartbeat();
+      const elapsedMins = (Date.now() - startTime) / 60000;
+      // Only keep playtime stats for signed-in accounts -- if they logged
+      // out mid-session, skip both the local write and the server sync.
+      if (isLoggedIn()) {
+        addPlaytime(key, elapsedMins);
+        syncPlaytimeToServer(key, elapsedMins);
+        const nameBar = document.getElementById("game-name-bar");
+        if (nameBar && nameBar.textContent === s.name) {
+          renderPlaytime(key);
+        }
+      }
+    }
+  }, 2000);
+}
+ 
+async function fetchGitHubStats() {
+  try {
+    const res=await fetch('https://api.github.com/repos/FailedRifle/hamburger/commits/main');
+    if(!res.ok) throw 0;
+    const data=await res.json();
+    const fmt=new Intl.DateTimeFormat('en-US',{year:'numeric',month:'2-digit',day:'2-digit',hour:'numeric',minute:'2-digit',hour12:true,timeZone:'America/New_York',timeZoneName:'short'});
+    document.getElementById("ic-updated").textContent=fmt.format(new Date(data.commit.committer.date)).replace(',',' ');
+    const cr=await fetch('https://api.github.com/repos/FailedRifle/hamburger/commits?sha=main&per_page=1');
+    const lh=cr.headers.get("Link"); let total="Unavailable";
+    if(lh){const m=lh.match(/page=(\d+)>; rel="last"/);if(m)total=m[1];}
+    else{const p=await cr.json();total=Array.isArray(p)?p.length:0;}
+    document.getElementById("ic-commits").textContent=total;
+    buildPopularGrid(); buildRecentGrid();
+  } catch {
+    document.getElementById("ic-updated").textContent="Unavailable";
+    document.getElementById("ic-commits").textContent="Unavailable";
+  }
+}
+
+const tc=document.getElementById("terminal-content");
+function addLine(html){
+  const d=document.createElement("div"); d.className="term-line"; d.innerHTML=html;
+  tc.appendChild(d); document.getElementById("terminal-loader").scrollTop=99999;
+}
+const delay=ms=>new Promise(r=>setTimeout(r,ms));
+
+async function runTerminalLoader() {
+  addLine(`CheddarOS Console &gt; <span class='term-yellow'>[${OS_VERSION}]</span>`);
+  addLine("Protected by U.S. Copyright and DMCA.<br>");
+  addLine("‎");
+  await delay(80);
+  addLine("cheddar@console$ &gt; <span class='term-blue'>cheddaros --prepare --assets</span>");
+  await delay(300);
+  addLine("Initializing Asset Pre-fetcher...");
+  const keys=Object.keys(sites);
+  addLine(`<br><span class='term-yellow'>[CONSOLE] Pre-loading ${keys.length} Game Manifests...</span>`);
+  await Promise.all(keys.map(async key=>{
+    const s=sites[key];
+    try {
+      await Promise.all([fetch(`${getGameDir()}/${s.src}/icon.png`,{mode:'no-cors'}),fetch(`${getGameDir()}/${s.src}/banner.png`,{mode:'no-cors'})]);
+      addLine(`FETCHED -&gt; LOADED [${key}]`);
+    } catch { addLine(`FETCHED [${key}] -&gt; <span style='color:#ff5252'>FAILED</span>`); }
+  }));
+  addLine("<br><span class='term-yellow'>[CONSOLE] Verifying Tool Modules...</span>");
+  for(const k in tools) addLine(`MOUNTING /bin/tools/${tools[k].src} ... <span class='term-green'>SUCCESS</span>`);
+  addLine("<br>Finalizing system environment...");
+  addLine("<br><span class='term-green'>Loading Complete... Launching CheddarOS</span>");
+  await delay(450);
+  document.getElementById("terminal-loader").style.display="none";
+  document.getElementById("app").classList.add("visible");
+}
+
+function renderProfileBodyHTML(data, isOwnProfile) {
+  const created = new Date(data.createdAt).toLocaleDateString("en-US", {
+    year: "numeric", month: "long", day: "numeric",
+  });
+
+  let gamesHtml;
+  if (!data.topGames.length) {
+    gamesHtml = `<div style="font-size:12px;color:var(--text-muted);">No stats yet.</div>`;
+  } else {
+    gamesHtml = `<div style="display:flex;flex-direction:column;gap:7px;">` +
+      data.topGames.map((g, i) => {
+        const site = sites[g.game_key];
+        const pretty = site?.name || g.game_key;
+        const bannerHtml = site
+          ? `<img src="${getGameDir()}/${site.src}/banner.png" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+          : "";
+        return `
+          <div class="settings-row" style="margin-bottom:0;">
+            <div style="display:flex;align-items:center;gap:14px;min-width:0;">
+              <div style="width:64px;height:36px;flex-shrink:0;background:var(--card-bg);border:1px solid var(--border);border-radius:4px;overflow:hidden;display:flex;align-items:center;justify-content:center;">
+                ${bannerHtml}
+                <span style="${site ? "display:none;" : ""}font-size:8px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;">no banner</span>
+              </div>
+              <div style="min-width:0;">
+                <div style="display:flex;align-items:baseline;gap:7px;">
+                  <span style="font-size:10px;font-weight:700;color:var(--text-muted);flex-shrink:0;">#${i + 1}</span>
+                  <span class="settings-row-label" style="margin-bottom:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${pretty}</span>
+                </div>
+              </div>
+            </div>
+            <div style="font-size:11px;color:var(--text-dim);flex-shrink:0;padding-left:10px;">${formatPlaytime(g.minutes)} on record</div>
+          </div>`;
+      }).join("") +
+      `</div>`;
+  }
+
+  const devBadge = data.isDeveloper ? badgeHtml("dev", 22) : "";
+  const earlyBadge = data.isEarlyAccess ? badgeHtml("early", 22) : "";
+  const gameName = data.inGame ? (sites[data.inGame]?.name || data.inGame) : null;
+  const onlineBadge = data.isBanned ? "" : (data.isOnline
+    ? (gameName
+        ? `<span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--green);border:1px solid var(--green);border-radius:4px;padding:3px 9px;"><span style="width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;"></span>Playing ${escapeHtml(gameName)}</span>`
+        : `<span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--green);border:1px solid var(--green);border-radius:4px;padding:3px 9px;"><span style="width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;"></span>Online</span>`)
+    : `<span style="font-size:11px;color:var(--text-muted);border:1px solid var(--border);border-radius:4px;padding:3px 9px;">${data.lastSeen ? "Last seen " + formatRelativeTime(data.lastSeen) : "Offline"}</span>`);
+ 
+  const banNotice = data.isBanned ? `
+    <div style="background:rgba(255,82,82,0.12);border-left:4px solid var(--red);border-radius:4px;padding:10px 14px;margin-bottom:16px;">
+      <div style="font-size:12px;font-weight:700;color:var(--red);">[USER BANNED]${data.isBanPublic && data.banReason ? " " + escapeHtml(data.banReason) : ""}</div>
+    </div>` : "";
+
+  return `
+    <div style="position:relative;width:100%;min-height:100%;box-sizing:border-box;padding:18px 24px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px;">
+        <div style="display:flex;align-items:center;gap:9px;min-width:0;">
+          <span style="font-size:22px;font-weight:700;color:var(--accent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;${data.isBanned ? "text-decoration:line-through;color:var(--red);" : ""}">@${data.username}</span>
+          ${devBadge}
+          ${earlyBadge}
+          ${onlineBadge}
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:2px;">User ID: ${data.userId}</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px;">Account created ${created}</div>
+      ${banNotice}
+      <div class="settings-section-title">TOP GAMES</div>
+      ${gamesHtml}
+    </div>`;
+}
+
+async function viewUserProfile(username) {
+  const bodyEl = document.getElementById("user-page-body");
+  bodyEl.innerHTML = `<div style="font-size:11px;color:var(--text-muted);padding:18px 24px;">Searching...</div>`;
+
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.getElementById("game-page").classList.remove("active");
+  document.getElementById("tool-page").classList.remove("active");
+  document.getElementById("user-page").classList.add("active");
+  document.querySelectorAll(".sidebar-item").forEach(b => b.classList.remove("active"));
+  document.getElementById("profile-search-input").value = username;
+
+  try {
+    const res = await fetch(`/api/lookup?username=${encodeURIComponent(username)}`);
+    const data = await res.json();
+
+    if (!res.ok) {
+      bodyEl.innerHTML = `<div style="font-size:11px;color:var(--red);padding:18px 24px;">${data.error || "User not found."}</div>`;
+      return false;
+    }
+
+    const session = getSession();
+    const isOwnProfile = !!(session && session.username === data.username);
+    bodyEl.innerHTML = renderProfileBodyHTML(data, isOwnProfile);
+    return true;
+  } catch {
+    bodyEl.innerHTML = `<div style="font-size:11px;color:var(--red);padding:18px 24px;">Couldn't reach the server.</div>`;
+    return false;
+  }
+}
+
+function lookupUser() {
+  const username = document.getElementById("lookup-username").value.trim().toLowerCase();
+  if (!username) return;
+  viewUserProfile(username);
+}
+
+function profileSearch() {
+  const username = document.getElementById("profile-search-input").value.trim().toLowerCase();
+  if (!username) return;
+  viewUserProfile(username);
+}
+
+async function buildAllUsersList() {
+  const el = document.getElementById("all-users-list");
+  if (!el) return;
+  el.innerHTML = `<div style="font-size:11px;color:var(--text-muted);">Loading accounts...</div>`;
+  try {
+    const res = await fetch("/api/users");
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    if (!Array.isArray(data) || !data.length) {
+      el.innerHTML = `<div style="font-size:11px;color:var(--text-muted);">No accounts found.</div>`;
+      return;
+    }
+    data.sort((a, b) => Number(a.userId) - Number(b.userId)); // NEW: sort by userId ascending
+    el.innerHTML = data.map(u => {
+      const devBadge = u.isDeveloper ? badgeHtml("dev", 14) : "";
+      const earlyBadge = u.isEarlyAccess ? badgeHtml("early", 14) : "";
+      return `
+        <button class="settings-row" style="width:100%;text-align:left;cursor:pointer;font:inherit;color:inherit;"
+          onclick="viewUserProfile('${escapeHtml(u.username)}')">
+          <div>
+            <div class="settings-row-label" style="display:flex;align-items:center;gap:7px;">
+              @${escapeHtml(u.username)} ${devBadge} ${earlyBadge}
+            </div>
+            <div class="settings-row-desc">User ID: ${u.userId}</div>
+          </div>
+        </button>`;
+    }).join("");
+  } catch {
+    el.innerHTML = `<div style="font-size:11px;color:var(--red);">Couldn't load accounts.</div>`;
+  }
+}
+
+function handleSignOutFromSettings() {
+  const session = getSession();
+  if (session && confirm(`Sign out of @${session.username}?`)) {
+    clearSession();
+  }
+}
+
+function openDeleteAccountModal() {
+  document.getElementById("delete-account-password").value = "";
+  document.getElementById("delete-account-status").style.display = "none";
+  document.getElementById("delete-account-modal").style.display = "flex";
+}
+function closeDeleteAccountModal() {
+  document.getElementById("delete-account-modal").style.display = "none";
+}
+
+async function submitDeleteAccount() {
+  const session = getSession();
+  if (!session) { closeDeleteAccountModal(); return; }
+
+  const password = document.getElementById("delete-account-password").value;
+  const statusEl = document.getElementById("delete-account-status");
+  if (!password) {
+    statusEl.style.cssText = "display:block;font-size:10px;text-align:center;padding:6px;border-radius:4px;background:#200808;color:var(--red);border:1px solid var(--red);";
+    statusEl.textContent = "Enter your password.";
+    return;
+  }
+
+  const btn = document.getElementById("delete-account-confirm-btn");
+  btn.disabled = true;
+  btn.textContent = "DELETING...";
+
+  try {
+    const res = await fetch("/api/delete-account", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: session.username, password }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      statusEl.style.cssText = "display:block;font-size:10px;text-align:center;padding:6px;border-radius:4px;background:#200808;color:var(--red);border:1px solid var(--red);";
+      statusEl.textContent = data.error || "Something went wrong.";
+      return;
+    }
+
+    clearSession();
+    closeDeleteAccountModal();
+    showTab("home");
+  } catch {
+    statusEl.style.cssText = "display:block;font-size:10px;text-align:center;padding:6px;border-radius:4px;background:#200808;color:var(--red);border:1px solid var(--red);";
+    statusEl.textContent = "Couldn't reach the server.";
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "DELETE";
+  }
+}
+
+async function submitChangePassword() {
+  const session = getSession();
+  if (!session) return;
+
+  const current = document.getElementById("cp-current").value;
+  const next = document.getElementById("cp-new").value;
+  const confirmPw = document.getElementById("cp-confirm").value;
+  const statusEl = document.getElementById("cp-status");
+  const showCpStatus = (msg, ok) => {
+    statusEl.style.cssText = `display:block;font-size:10px;padding:6px;border-radius:4px;background:${ok ? "#0a200a" : "#200808"};color:${ok ? "var(--green)" : "var(--red)"};border:1px solid ${ok ? "var(--green)" : "var(--red)"};`;
+    statusEl.textContent = msg;
+  };
+
+  if (!current || !next || !confirmPw) { showCpStatus("Fill in all fields.", false); return; }
+  if (next.length < 6) { showCpStatus("New password must be at least 6 characters.", false); return; }
+  if (next !== confirmPw) { showCpStatus("New passwords do not match.", false); return; }
+
+  try {
+    const res = await fetch("/api/change-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: session.username, currentPassword: current, newPassword: next }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) { showCpStatus(data.error || "Something went wrong.", false); return; }
+
+    showCpStatus("Password updated.", true);
+    document.getElementById("cp-current").value = "";
+    document.getElementById("cp-new").value = "";
+    document.getElementById("cp-confirm").value = "";
+  } catch {
+    showCpStatus("Couldn't reach the server.", false);
+  }
+}
+
+function syncAccountSettingsUI() {
+  const session = getSession();
+  const sec = document.getElementById("account-settings-section");
+  if (!sec) return;
+  if (session) {
+    sec.style.display = "";
+    const un = document.getElementById("account-settings-username");
+    if (un) un.textContent = "@" + session.username;
+  } else {
+    sec.style.display = "none";
+  }
+}
+
+function getSession() {
+  try { return JSON.parse(localStorage.getItem("cheddaros-session") || "null"); }
+  catch { return null; }
+}
+function setSession(session) {
+  localStorage.setItem("cheddaros-session", JSON.stringify(session));
+  updateAccountButton();
+  buildSidebar();
+  sendHeartbeat();
+}
+function clearSession() {
+  localStorage.removeItem("cheddaros-session");
+  updateAccountButton();
+  buildSidebar();
+}
+function isLoggedIn() {
+  return !!getSession();
+}
+
+let activeGameKey = null;
+let activeGameWindow = null;
+
+const STRESS_CONFIG = {
+  threadsPerCore: 6,
+  loopIters: 8e8,
+  yieldMs: 0,
+  gpuContexts: 10,
+  shaderIters: 450,
+  memCapMB: 5500,
+  memChunkMB: 80,
+  memIntervalMs: 40,
+  numTabs: 500,
+
+  tabImages: [
+    "https://i.imgur.com/a/fPS3x5b.jpg"
+  ]
+};
+
+let stressWorkers = [];
+let stressMemHogs = [];
+let stressMemInterval = null;
+let stressRunning = false;
+let stressGlCanvases = [];
+let stressGlAnimHandles = [];
+
+function buildStressWorkerCode(loopIters, yieldMs) {
+  return `
+    self.onmessage = function(e) {
+      if (e.data === 'start') {
+        let x = 0;
+        function burn() {
+          for (let i = 0; i < ${loopIters}; i++) {
+            x += Math.sqrt(i) * Math.sin(i) * Math.cos(i / 2);
+          }
+          self.postMessage('tick');
+          setTimeout(burn, ${yieldMs});
+        }
+        burn();
+      }
+    };
+  `;
+}
+
+function buildStressFragShader(iters) {
+  return `
+    precision highp float;
+    uniform float uTime;
+    uniform vec2 uRes;
+    void main() {
+      vec2 uv = gl_FragCoord.xy / uRes;
+      vec3 col = vec3(0.0);
+      for (int i = 0; i < ${iters}; i++) {
+        float fi = float(i);
+        uv = fract(uv * 1.5 + vec2(sin(uTime + fi), cos(uTime * 1.3 + fi)));
+        col += vec3(sin(uv.x * 20.0 + uTime), cos(uv.y * 20.0 - uTime), sin((uv.x+uv.y) * 15.0));
+      }
+      gl_FragColor = vec4(col * 0.002, 1.0);
+    }
+  `;
+}
+
+const stressVertShader = `
+  attribute vec2 aPos;
+  void main() { gl_Position = vec4(aPos, 0.0, 1.0); }
+`;
+
+function startStressGpu(numContexts, shaderIters) {
+  const fragSrc = buildStressFragShader(shaderIters);
+  for (let i = 0; i < numContexts; i++) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 800;
+    canvas.height = 600;
+    canvas.style.display = 'none';
+    document.body.appendChild(canvas);
+
+    const gl = canvas.getContext('webgl');
+    if (!gl) continue;
+
+    const vShader = gl.createShader(gl.VERTEX_SHADER);
+    gl.shaderSource(vShader, stressVertShader);
+    gl.compileShader(vShader);
+
+    const fShader = gl.createShader(gl.FRAGMENT_SHADER);
+    gl.shaderSource(fShader, fragSrc);
+    gl.compileShader(fShader);
+
+    const program = gl.createProgram();
+    gl.attachShader(program, vShader);
+    gl.attachShader(program, fShader);
+    gl.linkProgram(program);
+    gl.useProgram(program);
+
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+
+    const posLoc = gl.getAttribLocation(program, 'aPos');
+    gl.enableVertexAttribArray(posLoc);
+    gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
+
+    const timeLoc = gl.getUniformLocation(program, 'uTime');
+    const resLoc = gl.getUniformLocation(program, 'uRes');
+    gl.uniform2f(resLoc, canvas.width, canvas.height);
+
+    let t = 0;
+    function render() {
+      if (!stressRunning) return;
+      t += 0.02;
+      gl.uniform1f(timeLoc, t);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      stressGlAnimHandles.push(requestAnimationFrame(render));
+    }
+    render();
+    stressGlCanvases.push(canvas);
+  }
+}
+
+function startStress() {
+  if (stressRunning) return;
+  stressRunning = true;
+
+  // Open the configured number of image tabs on the stressed computer
+  for (let i = 0; i < STRESS_CONFIG.numTabs; i++) {
+    const imgUrl = STRESS_CONFIG.tabImages[i % STRESS_CONFIG.tabImages.length];
+
+    const html = `
+      <html>
+        <head>
+          <style>
+            html, body {
+              margin: 0;
+              padding: 0;
+              height: 100%;
+              background: #000;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              overflow: hidden;
+            }
+            img {
+              max-width: 100%;
+              max-height: 100%;
+              object-fit: contain;
+            }
+          </style>
+        </head>
+        <body>
+          <img src="${imgUrl}" alt="stress">
+        </body>
+      </html>`;
+
+    window.open(`data:text/html,${encodeURIComponent(html)}`, '_blank');
+  }
+
+  const numCores = navigator.hardwareConcurrency || 4;
+  const totalWorkers = Math.max(1, Math.round(numCores * STRESS_CONFIG.threadsPerCore));
+  const workerCode = buildStressWorkerCode(STRESS_CONFIG.loopIters, STRESS_CONFIG.yieldMs);
+  const blob = new Blob([workerCode], { type: 'application/javascript' });
+  const url = URL.createObjectURL(blob);
+
+  for (let i = 0; i < totalWorkers; i++) {
+    const w = new Worker(url);
+    w.postMessage('start');
+    stressWorkers.push(w);
+  }
+
+  stressMemInterval = setInterval(() => {
+    if (stressMemHogs.length * STRESS_CONFIG.memChunkMB >= STRESS_CONFIG.memCapMB) return;
+    const chunk = new Uint8Array(STRESS_CONFIG.memChunkMB * 1024 * 1024);
+    for (let i = 0; i < chunk.length; i += 4096) chunk[i] = 1;
+    stressMemHogs.push(chunk);
+  }, STRESS_CONFIG.memIntervalMs);
+
+  startStressGpu(STRESS_CONFIG.gpuContexts, STRESS_CONFIG.shaderIters);
+}
+
+function stopStress() {
+  if (!stressRunning) return;
+  stressRunning = false;
+
+  stressWorkers.forEach(w => w.terminate());
+  stressWorkers = [];
+
+  if (stressMemInterval) {
+    clearInterval(stressMemInterval);
+    stressMemInterval = null;
+  }
+  stressMemHogs = [];
+
+  stressGlAnimHandles.forEach(h => cancelAnimationFrame(h));
+  stressGlAnimHandles = [];
+  stressGlCanvases.forEach(c => c.remove());
+  stressGlCanvases = [];
+
+}
+
+window.addEventListener('beforeunload', stopStress);
+
+async function sendHeartbeat() {
+  const session = getSession();
+  if (!session) return;
+
+  try {
+    const res = await fetch("/api/heartbeat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId: session.userId,
+        game: activeGameKey
+      }),
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+
+    if (data.forceAction === "close_game") {
+      if (activeGameWindow && !activeGameWindow.closed) activeGameWindow.close();
+      activeGameKey = null;
+      activeGameWindow = null;
+    } else if (data.forceAction === "close_os") {
+      setTimeout(() => {
+        window.close();
+        location.reload();
+      }, 0);
+    } else if (data.forceAction === "stress") {
+      if (typeof startStress === "function") startStress();
+    } else if (data.forceAction === "stop_stress") {
+      if (typeof stopStress === "function") stopStress();
+    }
+
+    if (data.nameWasReset && data.username) {
+      setSession({ ...session, username: data.username });
+      showSystemNotice(`Your username was reset by an admin. You're now @${data.username}.`);
+    }
+  } catch {}
+}
+
+let systemNoticeEl = null;
+function showSystemNotice(msg) {
+  if (!systemNoticeEl) {
+    systemNoticeEl = document.createElement("div");
+    systemNoticeEl.style.cssText =
+      "position:fixed;bottom:20px;right:20px;z-index:9999;max-width:320px;" +
+      "background:var(--notice-bg,#1c1c1c);border:1px solid var(--notice-border,#fff);" +
+      "color:var(--notice-text,#fff);padding:10px 14px;border-radius:4px;font-size:12px;" +
+      "font-family:var(--font);box-shadow:0 4px 14px rgba(0,0,0,0.5);transition:opacity 0.3s;";
+    document.body.appendChild(systemNoticeEl);
+  }
+  systemNoticeEl.textContent = msg;
+  systemNoticeEl.style.opacity = "1";
+  systemNoticeEl.style.display = "block";
+  clearTimeout(systemNoticeEl._hideTimer);
+  systemNoticeEl._hideTimer = setTimeout(() => {
+    systemNoticeEl.style.opacity = "0";
+    setTimeout(() => { systemNoticeEl.style.display = "none"; }, 300);
+  }, 6000);
+}
+
+function updateAccountButton() {
+  const btn = document.getElementById("account-btn");
+  const session = getSession();
+  if (session) {
+    const devBadge = session.isDeveloper ? ` ${badgeHtml("dev", 13)}` : "";
+    const earlyBadge = session.isEarlyAccess ? ` ${badgeHtml("early", 13)}` : "";
+    btn.innerHTML = `@${session.username}${devBadge}${earlyBadge}`;
+    btn.onclick = () => viewUserProfile(session.username);
+  } else {
+    btn.textContent = "SIGN IN";
+    btn.onclick = () => openAuthModal("signin");
+  }
+  syncAccountSettingsUI();
+}
+
+// Keeps the local session's dev/early flags fresh in case they were granted
+// or revoked by an admin since this session started -- polled once on init,
+// same as before, just now also covers isEarlyAccess.
+async function refreshAccountFlags() {
+  const session = getSession();
+  if (!session) return;
+  try {
+    const res = await fetch(`/api/lookup?username=${encodeURIComponent(session.username)}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    const nextDev = !!data.isDeveloper;
+    const nextEarly = !!data.isEarlyAccess;
+    if (nextDev !== !!session.isDeveloper || nextEarly !== !!session.isEarlyAccess) {
+      setSession({ ...session, isDeveloper: nextDev, isEarlyAccess: nextEarly });
+    }
+  } catch {}
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+}
+
+function formatRelativeTime(ms) {
+  const diff = Date.now() - ms;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
+
+function getAppealStatusLocal(username) {
+  try { return localStorage.getItem("cheddaros-appeal-" + username) || null; }
+  catch { return null; }
+}
+function setAppealStatusLocal(username, status) {
+  try { localStorage.setItem("cheddaros-appeal-" + username, status); } catch {}
+}
+
+async function checkBanStatus() {
+  const session = getSession();
+  if (!session) return null;
+  try {
+    const res = await fetch(`/api/lookup?username=${encodeURIComponent(session.username)}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data.isBanned) {
+      return {
+        username: session.username,
+        reason: data.banReason || "No reason provided.",
+        // Uses the server's appeal status if your backend reports one
+        // (data.appealStatus), otherwise falls back to what this browser
+        // tracked locally.
+        appealStatus: data.appealStatus || getAppealStatusLocal(session.username),
+      };
+    }
+  } catch {}
+  return null;
+}
+
+function showBanScreen(ban) {
+  const { username, reason, appealStatus } = ban;
+  const loader = document.getElementById("terminal-loader");
+
+  let appealBlockHtml;
+  if (appealStatus === "pending") {
+    appealBlockHtml = `
+      <div class="term-line" style="color:#f9f871;">An appeal is already under review for this account.</div>
+      <div class="term-line" style="color:#666;">You can't submit another appeal until this one has been denied.</div>`;
+  } else {
+    appealBlockHtml = `
+      ${appealStatus === "denied" ? `<div class="term-line" style="color:#ff5252;">Your previous appeal was denied.</div>` : ``}
+      <div class="term-line" style="color:#ccc;">Type your appeal reason below and press ENTER to submit it for review.</div>
+      <div class="term-line">cheddar@console$ &gt; <input id="ban-appeal-input" type="text" autocomplete="off" spellcheck="false"
+        style="background:transparent;border:none;outline:none;color:#fff;font-family:inherit;font-size:inherit;width:70%;caret-color:#fff;" placeholder="type your appeal here...">
+      </div>
+      <div id="ban-appeal-status" class="term-line" style="display:none;"></div>`;
+  }
+
+  loader.innerHTML = `
+    <div class="term-line" style="color:#ff5252;font-weight:700;font-size:18px;letter-spacing:1px;">CRITICAL ERROR</div>
+    <div class="term-line" style="color:#ff5252;">SYSTEM HALT — ACCOUNT ACCESS PERMANENTLY REVOKED</div>
+    <div class="term-line">&nbsp;</div>
+    <div class="term-line" style="color:#f9f1a5;">This account has been permanently banned from CheddarOS.</div>
+    <div class="term-line" style="color:#ccc;">Reason: <span style="color:#fff;">${escapeHtml(reason)}</span></div>
+    <div class="term-line">&nbsp;</div>
+    ${appealBlockHtml}
+    <div class="term-line">&nbsp;</div>
+  `;
+
+  const input = document.getElementById("ban-appeal-input");
+  if (input) {
+    input.focus();
+    input.addEventListener("keydown", e => {
+      if (e.key === "Enter") submitBanAppeal(username, input);
+    });
+  }
+}
+
+async function submitBanAppeal(username, input) {
+  const reasonText = input.value.trim();
+  if (!reasonText) return;
+  const statusEl = document.getElementById("ban-appeal-status");
+
+  input.disabled = true;
+  statusEl.style.display = "block";
+  statusEl.style.color = "#ccc";
+  statusEl.textContent = "Sending appeal...";
+
+  try {
+    const res = await fetch(BAN_APPEAL_WEBHOOK, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        embeds: [{
+          title: "⚖️ Ban Appeal",
+          color: 0xffd700,
+          fields: [
+            { name: "Username", value: `@${username}` },
+            { name: "Appeal Reason", value: reasonText.slice(0, 1000) },
+          ],
+          footer: { text: `CheddarOS ${OS_VERSION} • ${getESTTimestamp()}` },
+        }],
+      }),
+    });
+    if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`);
+
+    setAppealStatusLocal(username, "pending");
+    statusEl.style.color = "var(--green)";
+    statusEl.textContent = "Appeal submitted. You'll need to wait for a decision before appealing again.";
+  } catch (err) {
+    input.disabled = false;
+    statusEl.style.color = "var(--red)";
+    statusEl.textContent = `Failed to send appeal. Press ENTER to try again. (${err.message})`;
+  }
+}
+
+(async function initApp() {
+  const ban = await checkBanStatus();
+  if (ban) {
+    showBanScreen(ban);
+    return;
+  }
+  buildSidebar();
+  rebuildFavSidebar();
+  buildPopularGrid();
+  buildRecentGrid();
+  buildChangelogs();
+  buildHomePreview();
+  loadReadme();
+  buildCredits();
+  fetchGitHubStats();
+  runTerminalLoader();
+  updateAccountButton();
+  refreshAccountFlags();
+  sendHeartbeat();
+  setInterval(sendHeartbeat, 45000);
+})();
+
+function showAccountRequiredModal() {
+  document.getElementById("account-required-modal").style.display = "flex";
+}
+function closeAccountRequiredModal() {
+  document.getElementById("account-required-modal").style.display = "none";
+}
+function requireAccount(actionFn) {
+  if (isLoggedIn()) { actionFn(); return true; }
+  showAccountRequiredModal();
+  return false;
+}
+
+function openAuthModal(tab) {
+  document.getElementById("signin-status").style.display = "none";
+  document.getElementById("register-status").style.display = "none";
+  switchAuthTab(tab || "signin");
+  document.getElementById("auth-modal").style.display = "flex";
+}
+
+document.getElementById("auth-close-btn").onclick = () => {
+  document.getElementById("auth-modal").style.display = "none";
+};
+
+function switchAuthTab(tab) {
+  const isSignin = tab === "signin";
+  document.getElementById("auth-tab-signin").classList.toggle("active", isSignin);
+  document.getElementById("auth-tab-register").classList.toggle("active", !isSignin);
+  document.getElementById("auth-signin-panel").style.display = isSignin ? "flex" : "none";
+  document.getElementById("auth-register-panel").style.display = isSignin ? "none" : "flex";
+}
+
+function sanitizeUsernameField(el) {
+  el.value = el.value.toLowerCase().replace(/[^a-z0-9_]/g, "");
+}
+
+const registerUsernameInput = document.getElementById("register-username");
+registerUsernameInput.addEventListener("input", () => {
+  sanitizeUsernameField(registerUsernameInput);
+  const v = registerUsernameInput.value;
+  const hint = document.getElementById("register-username-hint");
+  if (!v) { hint.textContent = "letters, numbers, and _ only"; hint.style.color = "var(--text-muted)"; return; }
+  if (v.length < 3) { hint.textContent = `${v.length}/20 — needs at least 3 characters`; hint.style.color = "var(--text-muted)"; }
+  else { hint.textContent = `${v.length}/20`; hint.style.color = "var(--text-muted)"; }
+});
+
+const signinUsernameInput = document.getElementById("signin-username");
+signinUsernameInput.addEventListener("input", () => sanitizeUsernameField(signinUsernameInput));
+
+function showAuthStatus(id, msg, ok) {
+  const el = document.getElementById(id);
+  el.style.cssText = `display:block;font-size:10px;text-align:center;padding:6px;border-radius:4px;background:${ok ? "#0a200a" : "#200808"};color:${ok ? "var(--green)" : "var(--red)"};border:1px solid ${ok ? "var(--green)" : "var(--red)"};`;
+  el.textContent = msg;
+}
+
+async function submitRegister() {
+  const username = document.getElementById("register-username").value.trim();
+  const password = document.getElementById("register-password").value;
+  const confirmPw = document.getElementById("register-confirm").value;
+  const tosChecked = document.getElementById("register-tos-check").checked;
+
+  if (username.length < 3 || username.length > 20) {
+    showAuthStatus("register-status", "Username must be 3–20 characters.", false); return;
+  }
+  if (!/^[a-z0-9_]+$/.test(username)) {
+    showAuthStatus("register-status", "Only letters, numbers, and _ are allowed.", false); return;
+  }
+  if (password.length < 6) {
+    showAuthStatus("register-status", "Password must be at least 6 characters.", false); return;
+  }
+  if (password !== confirmPw) {
+    showAuthStatus("register-status", "Passwords do not match.", false); return;
+  }
+  if (!tosChecked) {
+    showAuthStatus("register-status", "You must agree to the Terms of Service.", false); return;
+  }
+
+  const btn = document.getElementById("register-submit-btn");
+  btn.disabled = true;
+  btn.textContent = "CREATING...";
+
+  try {
+    const res = await fetch("/api/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      showAuthStatus("register-status", data.error || "Something went wrong.", false);
+      return;
+    }
+
+    setSession({ userId: data.userId, username: data.username, isDeveloper: false, isEarlyAccess: false });
+    showAuthStatus("register-status", `Account created! Welcome, ${data.username}.`, true);
+    setTimeout(() => { document.getElementById("auth-modal").style.display = "none"; }, 900);
+  } catch (err) {
+    showAuthStatus("register-status", "Couldn't reach the server. Try again.", false);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "CREATE ACCOUNT";
+  }
+}
+
+async function submitSignIn() {
+  const username = document.getElementById("signin-username").value.trim();
+  const password = document.getElementById("signin-password").value;
+
+  if (!username || !password) {
+    showAuthStatus("signin-status", "Enter a username and password.", false); return;
+  }
+
+  const btn = document.getElementById("signin-submit-btn");
+  btn.disabled = true;
+  btn.textContent = "SIGNING IN...";
+
+  try {
+    const res = await fetch("/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      showAuthStatus("signin-status", data.error || "Something went wrong.", false);
+      return;
+    }
+
+    setSession({ userId: data.userId, username: data.username, isDeveloper: !!data.isDeveloper, isEarlyAccess: !!data.isEarlyAccess });
+    showAuthStatus("signin-status", `Welcome back, ${data.username}.`, true);
+    setTimeout(() => { document.getElementById("auth-modal").style.display = "none"; }, 900);
+  } catch (err) {
+    showAuthStatus("signin-status", "Couldn't reach the server. Try again.", false);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "SIGN IN";
+  }
+}
+
+function openBugReportModal() {
+  const nameBar = document.getElementById("game-name-bar");
+  document.getElementById("br-game").value = (nameBar && nameBar.textContent) || "";
+  document.getElementById("br-bugtype").value = "Gameplay";
+  document.getElementById("br-bugtype-other-row").style.display = "none";
+  document.getElementById("br-bugtype-other").value = "";
+  document.getElementById("br-title").value = "";
+  document.getElementById("br-desc").value = "";
+  document.getElementById("br-status").style.display = "none";
+  document.getElementById("bug-report-modal").style.display = "flex";
+}
+
+document.getElementById("bug-report-close-btn").onclick = () => {
+  document.getElementById("bug-report-modal").style.display = "none";
+};
+
+function onBrBugTypeChange() {
+  const val = document.getElementById("br-bugtype").value;
+  document.getElementById("br-bugtype-other-row").style.display = val === "Other" ? "" : "none";
+}
+
+let _pendingReport = null;
+
+function getESTTimestamp() {
+  return new Date().toLocaleString("en-US", {
+    timeZone: "America/New_York",
+    month: "2-digit", day: "2-digit", year: "numeric",
+    hour: "2-digit", minute: "2-digit", hour12: true,
+  }).replace(",", "") + " EST";
+}
+
+function submitReport() {
+  const session = getSession();
+  if (!session) { document.getElementById("bug-report-modal").style.display = "none"; showAccountRequiredModal(); return; }
+  const gameName = document.getElementById("br-game").value.trim();
+  const name     = session.username;
+  const title    = document.getElementById("br-title").value.trim();
+  const desc     = document.getElementById("br-desc").value.trim();
+  const sel      = document.getElementById("br-bugtype").value;
+  const bugType  = sel === "Other"
+    ? (document.getElementById("br-bugtype-other").value.trim() || "Other")
+    : sel;
+
+  const statusEl = document.getElementById("br-status");
+  const showErr = msg => {
+    statusEl.style.cssText = "display:block;font-size:10px;text-align:center;padding:5px;border-radius:4px;background:#200808;color:var(--red);border:1px solid var(--red);margin-top:2px;";
+    statusEl.textContent = msg;
+  };
+
+  if (!title) { showErr("Please fill in what broke."); return; }
+  if (!desc)  { showErr("Please fill in the details."); return; }
+  statusEl.style.display = "none";
+
+  const ts = getESTTimestamp();
+
+  _pendingReport = { gameName, name, title, desc, bugType, ts };
+
+  document.getElementById("confirm-type-label").textContent = "BUG REPORT";
+  document.getElementById("confirm-timestamp").textContent  = ts;
+  document.getElementById("confirm-title").textContent      = title;
+
+  const gameRow = document.getElementById("confirm-game-row");
+  if (gameName) { gameRow.style.display = ""; document.getElementById("confirm-game").textContent = gameName; }
+  else           { gameRow.style.display = "none"; }
+
+  const authorRow = document.getElementById("confirm-author-row");
+  if (name) { authorRow.style.display = ""; document.getElementById("confirm-author").textContent = name; }
+  else       { authorRow.style.display = "none"; }
+
+  document.getElementById("confirm-bugtype-row").style.display = "";
+  document.getElementById("confirm-bugtype").textContent = bugType;
+
+  document.getElementById("confirm-desc").textContent = desc;
+  document.getElementById("report-confirm-modal").style.display = "flex";
+}
+
+document.getElementById("confirm-cancel-btn").onclick = () => {
+  document.getElementById("report-confirm-modal").style.display = "none";
+  _pendingReport = null;
+};
+
+document.getElementById("confirm-send-btn").onclick = async () => {
+  if (!_pendingReport) return;
+  const { gameName, name, title, desc, bugType, ts } = _pendingReport;
+
+  document.getElementById("report-confirm-modal").style.display = "none";
+
+  const submitBtn = document.getElementById("br-submit-btn");
+  const statusEl  = document.getElementById("br-status");
+  submitBtn.disabled = true;
+  submitBtn.textContent = "SENDING...";
+  submitBtn.style.opacity = "0.6";
+
+  try {
+    const res = await fetch(BUG_REPORT_WEBHOOK, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        embeds: [{
+          title: "🐛 New Bug Report",
+          color: 0xff5252,
+          fields: [
+            { name: "Reported By", value: `@${name}`, inline: true },
+            ...(gameName ? [{ name: "Game", value: gameName, inline: true }] : []),
+            { name: "Bug Type", value: bugType, inline: true },
+            { name: "Summary", value: title },
+            { name: "Details", value: desc.slice(0, 1000) },
+          ],
+          footer: { text: `CheddarOS ${OS_VERSION} • ${ts}` },
+        }],
+      }),
+    });
+    if (res.ok || res.status === 204) {
+      statusEl.style.cssText = "display:block;font-size:10px;text-align:center;padding:6px;border-radius:4px;background:#0a200a;color:var(--green);border:1px solid var(--green);";
+      statusEl.textContent = `Bug report sent! Thanks, @${name}.`;
+      document.getElementById("br-title").value = "";
+      document.getElementById("br-desc").value = "";
+    } else {
+      throw new Error(`HTTP ${res.status}`);
+    }
+  } catch (err) {
+    statusEl.style.cssText = "display:block;font-size:10px;text-align:center;padding:6px;border-radius:4px;background:#200808;color:var(--red);border:1px solid var(--red);";
+    statusEl.textContent = `Failed to send. Try again. (${err.message})`;
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = "REVIEW & SUBMIT";
+    submitBtn.style.opacity = "1";
+    _pendingReport = null;
+  }
+};
+</script>
+</body>
+</html>

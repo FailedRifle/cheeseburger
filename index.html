@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <link href="/loader/favicon.png" rel="icon" type="image/png">
+  <link id="pwa-manifest" rel="manifest" href="/loader/manifest.json">
+  <meta name="theme-color" content="#000000">
+  <title>executor</title>
+  <style>
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+<script>
+  const isInstallable = true;
+  const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  let deferredPrompt = null;
+  let promptAttempted = false;
+
+  if (!isInstallable) {
+    const manifest = document.getElementById('pwa-manifest');
+    if (manifest) manifest.remove();
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+    });
+  }
+
+async function runInjection() {
+  const targetUrl = new URL('/core/cheddarOS.html', window.location.origin).href;
+  const baseHref = new URL('/core/', window.location.origin).href;
+
+  try {
+    const response = await fetch(`${targetUrl}?t=${Date.now()}`, { cache: 'no-store' });
+    const htmlContent = await response.text();
+
+    const newWin = window.open('about:blank#cheddar', '_blank', 'width=1000,height=500,menubar=no,status=no,location=no');
+    
+    if (newWin) {
+      newWin.document.open();
+      newWin.document.write(`<base href="${baseHref}">${htmlContent}`);
+      newWin.document.close();
+
+      window.open('', '_self');
+      window.close();
+    }
+  } catch (e) {
+    console.error("Injection failed, check path configuration:", e);
+  }
+}
+
+  async function tryInstallPrompt() {
+    if (!isInstallable || isPWA || promptAttempted || !deferredPrompt) return;
+    promptAttempted = true;
+
+    try {
+      await deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+    } catch (e) {
+    } finally {
+      deferredPrompt = null;
+      removePromptListeners();
+    }
+  }
+
+  function addPromptListeners() {
+    window.addEventListener('click', tryInstallPrompt, { once: true });
+    window.addEventListener('keydown', tryInstallPrompt, { once: true });
+    window.addEventListener('touchstart', tryInstallPrompt, { once: true });
+  }
+
+  function removePromptListeners() {
+    window.removeEventListener('click', tryInstallPrompt);
+    window.removeEventListener('keydown', tryInstallPrompt);
+    window.removeEventListener('touchstart', tryInstallPrompt);
+  }
+
+  if (isInstallable && !isPWA) {
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      addPromptListeners();
+    });
+  }
+
+  if (isPWA) {
+    if (!sessionStorage.getItem('injected')) {
+      sessionStorage.setItem('injected', 'true');
+      runInjection();
+    }
+  }
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/loader/service-worker.js').catch(() => {});
+    });
+  }
+</script>
+</body>
+</html>

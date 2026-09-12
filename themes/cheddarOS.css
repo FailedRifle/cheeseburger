@@ -1,0 +1,13 @@
+:root {
+  --bg: #121212;
+  --sidebar-bg: #0f0f0f;
+  --panel-bg: #1a1a1a;
+  --card-bg: #1e1e1e;
+  --border: #333333;
+  --border-hover: #555555;
+  --text: #e0e0e0;
+  --text-dim: #999999;
+  --text-muted: #676767;
+  --accent: #ffffff;
+}
+ 

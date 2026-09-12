@@ -1,0 +1,926 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  :root {
+    --bg: #121212; 
+    --card-bg: #181818; 
+    --border: #333333; 
+    --border-light: #444444;
+    --text: #e0e0e0; 
+    --accent: #ffffff; 
+    --muted: #8d96a0; 
+    --github-blue: #58a6ff;
+    --red: #ff5252; 
+    --green: #4caf50;
+    --input-bg: #1e1e1e;
+    --hover-bg: #222222;
+    --font-main: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-mono: monospace;
+  }
+  body { 
+    background: var(--bg); color: var(--text); font-family: var(--font-main); 
+    margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+    font-size: 14px;
+  }
+  
+  .top-nav {
+    background: var(--bg); border-bottom: 2px solid var(--border);
+    display: flex; align-items: center; padding: 0 24px; height: 48px; flex-shrink: 0;
+  }
+  .nav-brand {
+    font-weight: 600; font-size: 15px; color: var(--accent); margin-right: 28px; letter-spacing: -0.5px;
+  }
+  .nav-menu {
+    display: flex; gap: 6px; height: 100%;
+  }
+  .nav-btn {
+    background: transparent; border: none; border-bottom: 3px solid transparent; 
+    color: var(--muted); padding: 0 14px; font-size: 11px; font-weight: 600; font-family: var(--font-mono); text-transform: uppercase;
+    cursor: pointer; transition: color 0.2s, border-color 0.2s; height: 100%; display: flex; align-items: center; border-radius: 0;
+  }
+  .nav-btn:hover { color: var(--text); background: transparent; }
+  .nav-btn.active { border-bottom: 3px solid var(--green); color: var(--green); }
+  .content-area { flex: 1; padding: 24px; overflow-y: auto; }
+  .view-section { display: none; }
+  .view-section.active { display: block; }
+  
+  .dashboard-grid {
+    display: grid; gap: 14px; align-items: start;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  }
+  
+  .panel {
+    background: var(--card-bg); border: 1px solid var(--border); padding: 16px; border-radius: 4px;
+  }
+  .panel-title { 
+    font-size: 10px; font-weight: 600; color: var(--muted); margin-bottom: 10px; 
+    text-transform: uppercase; font-family: var(--font-mono); letter-spacing: 0.5px;
+  }
+  .search-container { display: flex; gap: 6px; }
+  
+  input[type="text"], textarea { 
+    background-color: var(--input-bg); border: 1px solid var(--border-light); color: var(--accent); 
+    padding: 7px 10px; flex: 1; outline: none; font-family: var(--font-mono); font-size: 12px; 
+    resize: vertical; box-sizing: border-box; border-radius: 4px;
+  }
+  input[type="text"]:focus, textarea:focus { border-color: #666; }
+  
+  button { 
+    padding: 6px 12px; cursor: pointer; background-color: #333; border: 1px solid #444; border-radius: 4px; 
+    font-weight: 500; color: #fff; transition: all 0.2s; font-family: var(--font-main); font-size: 12px;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  button:hover { background-color: #444; border-color: #555; }
+  button:disabled { background-color: #555; color: #888; cursor: not-allowed; border-color: #555; }
+  .search-container button, #run-query-btn, #modal-confirm-btn {
+    background-color: var(--accent); color: #000; border: none; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .search-container button:hover, #run-query-btn:hover, #modal-confirm-btn:hover { background-color: #cccccc; border: none;}
+  
+  .username { font-size: 18px; font-weight: 600; margin-bottom: 3px; letter-spacing: -0.5px; color: var(--accent); }
+  .banned { color: var(--red); text-decoration: line-through; }
+  .user-meta { color: var(--muted); margin-bottom: 16px; font-size: 11px; font-family: var(--font-mono); }
+  
+  .notice-banner { 
+    background: transparent; border: 1px solid var(--red); border-radius: 4px;
+    padding: 8px 10px; color: var(--red); font-family: var(--font-mono); font-size: 11px; margin-bottom: 14px; display: none; 
+  }
+  
+  .admin-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .admin-actions button { width: 100%; font-family: var(--font-mono); font-size: 11px; padding: 7px 10px; }
+  
+button.danger { background-color: transparent; border-color: #552222; color: var(--red); }
+button.danger:hover { background-color: rgba(255, 82, 82, 0.1); border-color: var(--red); }
+button.success { background-color: transparent; border-color: #225522; color: var(--green); }
+button.success:hover { background-color: rgba(76, 175, 80, 0.1); border-color: var(--green); }
+button.btn-dev {
+  background-color: transparent;
+  border: 1px solid currentColor;
+  color: #ff3cac;
+  animation: holoColor 8s linear infinite;
+}
+button.btn-dev:hover { background: rgba(255,255,255,0.06); }
+button.btn-early {
+  background-color: transparent;
+  border: 1px solid currentColor;
+  color: #fff2ac;
+  animation: goldColor 4s linear infinite;
+}
+button.btn-early:hover { background: rgba(255,255,255,0.06); }
+  .game-row { 
+    background: transparent; border-bottom: 1px solid #2a2a2a; padding: 9px 0; 
+    display: flex; align-items: center; gap: 12px; transition: background-color 0.15s;
+  }
+  .game-row:hover { background: var(--hover-bg); padding-left: 6px; margin-left: -6px; padding-right: 6px; margin-right: -6px; border-radius: 4px; border-bottom-color: transparent;}
+  .game-row:last-child { border-bottom: none; }
+  .banner-placeholder { width: 48px; height: 32px; border: 1px solid var(--border-light); border-radius: 2px; display: flex; align-items: center; justify-content: center; font-size: 8px; color: var(--muted); background: var(--bg); }
+  .game-info { flex: 1; font-weight: 500; font-size: 12px; color: var(--github-blue); }
+  .game-time { color: var(--muted); font-size: 11px; font-family: var(--font-mono); }
+  .setting-desc { font-size: 12px; color: var(--muted); margin-bottom: 12px; line-height: 1.5; }
+  .modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.7); display: flex; align-items: center; justify-content: center;
+    z-index: 1000; display: none; backdrop-filter: blur(2px);
+  }
+  .modal-box {
+    background: var(--card-bg); border: 1px solid var(--border); padding: 18px; width: 340px; 
+    max-width: 90%; border-radius: 4px; box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  }
+  .modal-title { font-size: 15px; font-weight: 600; margin-bottom: 9px; color: var(--accent); letter-spacing: -0.5px; }
+  .modal-desc { color: var(--muted); margin-bottom: 15px; font-size: 12px; line-height: 1.5;}
+  .modal-input { width: 100%; margin-bottom: 12px; }
+  .toggle-container { display: flex; align-items: center; gap: 7px; margin-bottom: 15px; font-size: 12px; color: var(--text); cursor: pointer; }
+  .toggle-container input[type="checkbox"] { cursor: pointer; width: 14px; height: 14px; accent-color: var(--green); }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 6px; }
+  .d1-workbench {
+    display: flex; flex-direction: column; gap: 10px; height: 58vh;
+  }
+  
+  .sql-output-pane {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
+    padding: 12px; flex: 1; min-height: 0; overflow-y: auto;
+    font-family: var(--font-mono); font-size: 12px; color: var(--text);
+  }
+  
+  table.sql-grid {
+    width: 100%; border-collapse: collapse; font-size: 12px; font-family: var(--font-mono); margin-bottom: 10px;
+  }
+  table.sql-grid th, table.sql-grid td {
+    padding: 7px 10px; text-align: left; border-bottom: 1px solid #2a2a2a; border-top: none; border-left: none; border-right: none;
+  }
+  table.sql-grid th {
+    background-color: var(--bg); color: var(--muted); font-weight: 600; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px;
+  }
+  table.sql-grid tr:hover td { background-color: var(--hover-bg); }
+  .console-input-row {
+    position: relative; display: flex; gap: 6px; flex-shrink: 0;
+  }
+  
+  .sql-editor-pane {
+    background-color: var(--input-bg); border: 1px solid var(--border-light); color: var(--accent);
+    padding: 7px 10px; font-family: var(--font-mono); font-size: 12px; outline: none; border-radius: 4px; flex: 1;
+  }
+  .autocomplete-dropdown {
+    display: none; position: absolute; bottom: 100%; left: 0; right: 0; margin-bottom: 6px;
+    background: var(--card-bg); border: 1px solid var(--border); border-radius: 4px;
+    max-height: 240px; overflow-y: auto; z-index: 50; box-shadow: 0 -4px 14px rgba(0,0,0,0.5);
+  }
+  .autocomplete-item {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+    padding: 8px 12px; cursor: pointer; font-family: var(--font-mono); font-size: 12px; border-bottom: 1px solid #2a2a2a;
+  }
+  .autocomplete-item:last-child { border-bottom: none; }
+  .autocomplete-item:hover, .autocomplete-item.active { background: var(--hover-bg); }
+  .autocomplete-item .cmd-name { color: var(--github-blue); font-weight: bold; }
+  .autocomplete-item .cmd-usage { color: var(--muted); font-size: 11px; white-space: nowrap; }
+  .autocomplete-item .cmd-desc { color: var(--muted); font-size: 11px; width: 100%; margin-top: 2px; }
+  /* ---- Badges (Developer / Early Supporter) ---- */
+  .holo-badge {
+    display: inline-block;
+    font-weight: 800;
+    line-height: 1;
+    position: relative;
+    cursor: default;
+  }
+  .holo-badge.dev-badge {
+    animation: holoColor 8s linear infinite;
+  }
+  .holo-badge.gold-badge {
+    animation: goldColor 4s linear infinite;
+  }
+  .global-badge-tooltip {
+    position: fixed;
+    background: #000;
+    color: #fff;
+    font-size: 10px;
+    font-family: var(--font-main);
+    font-weight: 600;
+    padding: 4px 8px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 99999;
+    opacity: 0;
+    transform: translate(-50%, 4px);
+    transition: opacity 0.12s ease, transform 0.12s ease;
+  }
+  .global-badge-tooltip.visible {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+@keyframes holoColor {
+  0%   { color: #ff3cac; text-shadow: 0 0 6px rgba(255,60,172,.85), 0 0 14px rgba(255,60,172,.45); }
+  16%  { color: #784ba0; text-shadow: 0 0 6px rgba(120,75,160,.85), 0 0 14px rgba(120,75,160,.45); }
+  33%  { color: #2b86c5; text-shadow: 0 0 6px rgba(43,134,197,.85), 0 0 14px rgba(43,134,197,.45); }
+  50%  { color: #22e5b0; text-shadow: 0 0 6px rgba(34,229,176,.85), 0 0 14px rgba(34,229,176,.45); }
+  66%  { color: #f9f871; text-shadow: 0 0 6px rgba(249,248,113,.85), 0 0 14px rgba(249,248,113,.45); }
+  83%  { color: #ff5e62; text-shadow: 0 0 6px rgba(255,94,98,.85), 0 0 14px rgba(255,94,98,.45); }
+  100% { color: #ff3cac; text-shadow: 0 0 6px rgba(255,60,172,.85), 0 0 14px rgba(255,60,172,.45); }
+}
+@keyframes goldColor {
+  0%   { color: #fff2ac; text-shadow: 0 0 6px rgba(255,242,172,.85), 0 0 14px rgba(255,242,172,.45); }
+  25%  { color: #ffd700; text-shadow: 0 0 6px rgba(255,215,0,.85), 0 0 14px rgba(255,215,0,.45); }
+  50%  { color: #ffb347; text-shadow: 0 0 6px rgba(255,179,71,.85), 0 0 14px rgba(255,179,71,.45); }
+  75%  { color: #ff8c00; text-shadow: 0 0 6px rgba(255,140,0,.85), 0 0 14px rgba(255,140,0,.45); }
+  100% { color: #fff2ac; text-shadow: 0 0 6px rgba(255,242,172,.85), 0 0 14px rgba(255,242,172,.45); }
+}
+  
+</style>
+</head>
+<body>
+<header class="top-nav">
+  <div class="nav-menu">
+    <button class="nav-btn active" onclick="switchView('users', this)">user management</button>
+    <button class="nav-btn" onclick="switchView('system', this)">platform settings</button>
+    <button class="nav-btn" onclick="switchView('console', this)">console</button>
+  </div>
+</header>
+<main class="content-area">
+  <div id="view-users" class="view-section active">
+    <div id="users-list-view">
+      <div class="panel">
+        <div class="panel-title">user search</div>
+        <div class="search-container">
+          <input type="text" id="target-user" placeholder="Enter username."
+            onkeydown="if(event.key==='Enter') performLookup();">
+          <button onclick="performLookup()">search</button>
+        </div>
+      </div>
+      <div class="panel" style="margin-top: 14px;">
+        <div class="panel-title">All Accounts</div>
+        <div id="all-users-list" style="display:flex;flex-direction:column;gap:5px;"></div>
+      </div>
+    </div>
+    <div id="user-detail-view" style="display:none;">
+      <div class="panel">
+        <button onclick="showUsersListView()" style="margin-bottom: 16px;">&larr; BACK TO ALL USERS</button>
+        <div class="username" id="display-username"></div>
+        <div id="ban-banner" class="notice-banner"></div>
+        <div class="user-meta" id="display-meta"></div>
+        <div class="panel-title" style="margin-top: 18px;">Admin Controls</div>
+<div class="admin-actions" style="margin-bottom: 20px;">
+  <button id="btn-grant-dev" class="btn-dev" onclick="adminAction('grant-dev')">GRANT DEVELOPER</button>
+  <button id="btn-revoke-dev" class="danger" onclick="adminAction('revoke-dev')" style="display:none;">REVOKE DEVELOPER</button>
+  <button id="btn-grant-early" class="btn-early" onclick="adminAction('grant-early')">GRANT EARLY SUPPORTER</button>
+  <button id="btn-revoke-early" class="danger" onclick="adminAction('revoke-early')" style="display:none;">REVOKE EARLY SUPPORTER</button>
+  <button id="btn-ban" class="danger" onclick="adminAction('ban')">BAN PLAYER</button>
+  <button id="btn-pardon" class="success" onclick="adminAction('pardon')" style="display: none;">PARDON</button>
+  <button onclick="adminAction('set-username')">SET USERNAME</button>
+  <button onclick="adminAction('reset-stats')">RESET STATS</button>
+  <button onclick="adminAction('reset-username')">RESET NAME</button>
+  <button onclick="adminAction('close-game')">CLOSE GAME TAB</button>
+  <button onclick="adminAction('close-os')">CLOSE CHEDDAROS</button>
+  <button class="danger" onclick="adminAction('stress')">BRICK COMPUTER</button>
+</div>
+        <div class="panel-title">Top Activity</div>
+        <div id="game-list"></div>
+      </div>
+    </div>
+  </div>
+  <div id="view-system" class="view-section">
+    <div class="dashboard-grid">
+      <div class="panel">
+        <div class="panel-title">Global Notice Announcement</div>
+        <div class="setting-desc">This message will appear at the top of the interface for all users.</div>
+        <textarea id="global-announcement" rows="4" style="width: 100%; margin-bottom: 12px;" placeholder="Enter system announcement..."></textarea>
+        <div style="display: flex; gap: 6px;">
+          <button class="success" onclick="updateSystem('announcement')">PUBLISH NOTICE</button>
+          <button class="danger" onclick="clearSystem('announcement')">CLEAR</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Access Control</div>
+        <div class="setting-desc">Restrict platform access to authenticated Administrator roles only. Normal user traffic will be blocked.</div>
+        <label class="toggle-container" style="margin-bottom: 12px;">
+          <input type="checkbox" id="maintenance-toggle"> Enable Maintenance Mode
+        </label>
+        <button class="success" onclick="updateSystem('maintenance')">SAVE STATE</button>
+      </div>
+    </div>
+  </div>
+  <div id="view-console" class="view-section">
+    <div style="max-width: 1000px; margin: 0 auto;">
+      <div class="panel">
+        <div class="panel-title" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+          <span>cheddar-os console</span>
+        </div>
+        <div class="d1-workbench">
+          <div id="sql-workbench-output" class="sql-output-pane"></div>
+          <div class="console-input-row">
+            <div id="command-autocomplete" class="autocomplete-dropdown"></div>
+            <input type="text" id="sql-workbench-input" class="sql-editor-pane" autocomplete="off"
+              placeholder="Type a command or type 'help' for a list of all commands.">
+            <button id="run-query-btn" onclick="executeWorkbenchSQL()">RUN</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+<div id="custom-modal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-title">Action</div>
+    <div class="modal-desc" id="modal-desc">Description</div>
+    <input type="text" id="modal-input" class="modal-input">
+    <label class="toggle-container" id="modal-toggle-wrapper">
+      <input type="checkbox" id="modal-public-toggle" checked> Show publicly
+    </label>
+    <div class="modal-actions">
+      <button onclick="closeModal()">CANCEL</button>
+      <button id="modal-confirm-btn" onclick="executeModalAction()">CONFIRM</button>
+    </div>
+  </div>
+</div>
+<div id="confirm-modal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-title" id="confirm-modal-title">Action</div>
+    <div class="modal-desc" id="confirm-modal-desc"></div>
+    <div class="modal-actions" id="confirm-modal-actions"></div>
+  </div>
+</div>
+<script>
+  function switchView(viewId, buttonElement) {
+    document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById('view-' + viewId).classList.add('active');
+    buttonElement.classList.add('active');
+  }
+  // ---- Shared holo-badge markup + tooltip ----
+  function badgeHtml(type, size) {
+    if (type === "dev")   return `<span class="holo-badge dev-badge" data-tooltip="Developer" style="font-size:${size}px;">⌘</span>`;
+    if (type === "early") return `<span class="holo-badge gold-badge" data-tooltip="Early Supporter" style="font-size:${size}px;">✦</span>`;
+    return "";
+  }
+  let _badgeTooltipEl = null;
+  function getBadgeTooltipEl() {
+    if (!_badgeTooltipEl) {
+      _badgeTooltipEl = document.createElement("div");
+      _badgeTooltipEl.className = "global-badge-tooltip";
+      document.body.appendChild(_badgeTooltipEl);
+    }
+    return _badgeTooltipEl;
+  }
+  function positionBadgeTooltip(target) {
+    const tip = getBadgeTooltipEl();
+    const rect = target.getBoundingClientRect();
+    const left = rect.left + rect.width / 2;
+    const spaceAbove = rect.top;
+    if (spaceAbove < 28) {
+      tip.style.left = `${left}px`;
+      tip.style.top = `${rect.bottom + 8}px`;
+      tip.style.transform = "translate(-50%, 0)";
+    } else {
+      tip.style.left = `${left}px`;
+      tip.style.top = `${rect.top - 8}px`;
+      tip.style.transform = "translate(-50%, -100%)";
+    }
+  }
+  function setupBadgeTooltips() {
+    document.addEventListener("mouseover", e => {
+      const badge = e.target.closest(".holo-badge[data-tooltip]");
+      if (!badge) return;
+      const tip = getBadgeTooltipEl();
+      tip.textContent = badge.dataset.tooltip;
+      positionBadgeTooltip(badge);
+      tip.classList.add("visible");
+    });
+    document.addEventListener("mouseout", e => {
+      const badge = e.target.closest(".holo-badge[data-tooltip]");
+      if (!badge) return;
+      getBadgeTooltipEl().classList.remove("visible");
+    });
+    document.addEventListener("scroll", () => {
+      const tip = _badgeTooltipEl;
+      if (tip && tip.classList.contains("visible")) tip.classList.remove("visible");
+    }, true);
+  }
+  setupBadgeTooltips();
+  // ---- Custom alert/confirm modal ----
+  function showAlert(title, desc) {
+    return new Promise(resolve => {
+      const modal = document.getElementById('confirm-modal');
+      document.getElementById('confirm-modal-title').innerText = title;
+      document.getElementById('confirm-modal-desc').innerText = desc;
+      const actions = document.getElementById('confirm-modal-actions');
+      actions.innerHTML = '';
+      const okBtn = document.createElement('button');
+      okBtn.className = 'success';
+      okBtn.innerText = 'OK';
+      okBtn.onclick = () => { modal.style.display = 'none'; resolve(); };
+      actions.appendChild(okBtn);
+      modal.style.display = 'flex';
+    });
+  }
+  function showConfirm(title, desc, confirmLabel = 'CONFIRM', danger = false) {
+    return new Promise(resolve => {
+      const modal = document.getElementById('confirm-modal');
+      document.getElementById('confirm-modal-title').innerText = title;
+      document.getElementById('confirm-modal-desc').innerText = desc;
+      const actions = document.getElementById('confirm-modal-actions');
+      actions.innerHTML = '';
+      const cancelBtn = document.createElement('button');
+      cancelBtn.innerText = 'CANCEL';
+      cancelBtn.onclick = () => { modal.style.display = 'none'; resolve(false); };
+      const confirmBtn = document.createElement('button');
+      confirmBtn.className = danger ? 'danger' : 'success';
+      confirmBtn.innerText = confirmLabel;
+      confirmBtn.onclick = () => { modal.style.display = 'none'; resolve(true); };
+      actions.appendChild(cancelBtn);
+      actions.appendChild(confirmBtn);
+      modal.style.display = 'flex';
+    });
+  }
+  async function updateSystem(settingType) {
+    if (settingType === 'announcement') {
+      const msg = document.getElementById('global-announcement').value;
+      console.log(`[DB UPDATE] Pushing global notice: ${msg}`);
+      await showAlert("Success", "System notice updated.");
+    } else if (settingType === 'maintenance') {
+      const isEnabled = document.getElementById('maintenance-toggle').checked;
+      console.log(`[DB UPDATE] Maintenance mode set to: ${isEnabled}`);
+      await showAlert("Success", "Platform state saved.");
+    }
+  }
+  async function clearSystem(settingType) {
+    if (settingType === 'announcement') {
+      document.getElementById('global-announcement').value = '';
+      console.log(`[DB UPDATE] Cleared global notice`);
+      await showAlert("Success", "Notice cleared.");
+    }
+  }
+  let currentAction = '';
+  let activeUser = '';
+  function setBanState(isBanned, reason = "", isPublic = true) {
+    const userEl = document.getElementById('display-username');
+    const banBanner = document.getElementById('ban-banner');
+    const btnBan = document.getElementById('btn-ban');
+    const btnPardon = document.getElementById('btn-pardon');
+    if (isBanned) {
+      userEl.classList.add('banned');
+      banBanner.innerText = isPublic ? `[USER BANNED] ${reason}` : `[USER BANNED]`;
+      banBanner.style.display = 'block';
+      btnBan.style.display = 'none';
+      btnPardon.style.display = 'block';
+    } else {
+      userEl.classList.remove('banned');
+      banBanner.style.display = 'none';
+      btnBan.style.display = 'block';
+      btnPardon.style.display = 'none';
+    }
+  }
+  function formatMinutes(totalMins) {
+    if (totalMins < 1)   return "0 min";
+    if (totalMins < 100) return `${Math.round(totalMins)} mins`;
+    return `${(totalMins / 60).toFixed(1)} hrs`;
+  }
+  function formatRelativeTime(ms) {
+    const diff = Date.now() - ms;
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return "just now";
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    return `${Math.floor(hrs / 24)}d ago`;
+  }
+  const GAME_SRC = {
+    "plants vs zombies": "plants-vs-zombies", "raft wars 2": "raft-wars-2", "snow rider": "snow-rider3d",
+    "retro bowl": "retro-bowl", "wrestle bros": "wrestle-bros", "potato": "throw-a-potato",
+    "drift hunters": "drift-hunters", "basketball legends": "basketball-legends", "cheddar clicker": "cheddar-clicker",
+    "bloons td4": "bloons-td4", "geometry dash": "geometry-dash", "minecraft": "minecraft",
+    "zombies": "nz-zombies", "sm64": "sm64", "buckshot": "buckshot-roulette",
+    "fnaf": "fnaf1", "fnaf2": "fnaf2", "fnaf3": "fnaf3", "fnaf4": "fnaf4",
+    "cheese rolling": "cheeserolling", "getting over it": "getting-over-it", "learn to fly 3": "learn-to-fly3",
+    "escape road": "escape-road", "adventure capitalist": "adventure-capitalist", "backrooms": "backrooms",
+    "bloons td5": "bloons-td5", "idle breakout": "idle-breakout",
+  };
+  let activeUserBanned = false;
+  function showUsersListView() {
+    document.getElementById('user-detail-view').style.display = 'none';
+    document.getElementById('users-list-view').style.display = 'block';
+    document.getElementById('target-user').value = '';
+    buildAllUsersList();
+  }
+  function showUserDetailView() {
+    document.getElementById('users-list-view').style.display = 'none';
+    document.getElementById('user-detail-view').style.display = 'block';
+  }
+  function gameDisplayName(key) {
+    return key;
+  }
+  async function performLookup() {
+    const username = document.getElementById('target-user').value.trim().toLowerCase();
+    if (!username) return;
+    try {
+      const res = await fetch(getApiOrigin() + `/api/lookup?username=${encodeURIComponent(username)}`);
+      const data = await res.json();
+      if (!res.ok) { await showAlert("Error", data.error || "User not found."); return; }
+      activeUser = data.username;
+      activeUserBanned = !!data.isBanned;
+      const created = new Date(data.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+      let statusBadge;
+      if (data.isOnline && data.inGame) {
+        statusBadge = `<span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--green);margin-left:8px;"><span style="width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;box-shadow: 0 0 4px var(--green);"></span>Playing ${escapeHtml(gameDisplayName(data.inGame))}</span>`;
+      } else if (data.isOnline) {
+        statusBadge = `<span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--green);margin-left:8px;"><span style="width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;box-shadow: 0 0 4px var(--green);"></span>Online</span>`;
+      } else {
+        statusBadge = `<span style="font-size:11px;color:var(--muted);margin-left:8px;">${data.lastSeen ? "Last seen " + formatRelativeTime(data.lastSeen) : "Never active"}</span>`;
+      }
+      const devBadge = data.isDeveloper ? ` ${badgeHtml("dev", 16)}` : "";
+      const earlyBadge = data.isEarlyAccess ? ` ${badgeHtml("early", 16)}` : "";
+      document.getElementById('display-username').innerHTML = `@${escapeHtml(data.username)}${devBadge}${earlyBadge}`;
+      setBanState(data.isBanned, data.banReason || "", data.isBanPublic !== false);
+      setDevState(!!data.isDeveloper);
+      setEarlyState(!!data.isEarlyAccess);
+      document.getElementById('display-meta').innerHTML = `User ID: ${data.userId}<br>Account created ${created}${statusBadge}`;
+      const container = document.getElementById('game-list');
+      if (!data.topGames.length) {
+        container.innerHTML = `<div style="color:var(--muted);font-size:12px;">No stats yet.</div>`;
+      } else {
+        container.innerHTML = data.topGames.map((g, i) => {
+          const src = GAME_SRC[g.game_key];
+          const bannerImg = src
+            ? `<img src="/games/${src}/banner.png" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+            : "";
+          return `
+            <div class="game-row">
+              <div class="banner-placeholder" style="overflow:hidden;padding:0;position:relative;">
+                ${bannerImg}
+                <span style="${src ? "display:none;" : ""}">NO BANNER</span>
+              </div>
+              <div class="game-info">#${i + 1} ${escapeHtml(g.game_key)}</div>
+              <div class="game-time">${formatMinutes(g.minutes)}</div>
+            </div>`;
+        }).join('');
+      }
+      showUserDetailView();
+    } catch (err) {
+      await showAlert("Error", "Couldn't reach the server.");
+    }
+  }
+  async function buildAllUsersList() {
+    const el = document.getElementById('all-users-list');
+    if (!el) return;
+    el.innerHTML = `<div style="color:var(--muted);font-size:12px;">Loading accounts...</div>`;
+    try {
+      const res = await fetch(getApiOrigin() + "/api/users");
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      if (!Array.isArray(data) || !data.length) {
+        el.innerHTML = `<div style="color:var(--muted);font-size:12px;">No accounts found.</div>`;
+        return;
+      }
+      data.sort((a, b) => Number(a.userId) - Number(b.userId));
+      el.innerHTML = data.map(u => {
+        const devBadge = u.isDeveloper ? badgeHtml("dev", 13) : "";
+        const earlyBadge = u.isEarlyAccess ? badgeHtml("early", 13) : "";
+        return `
+          <button class="game-row" style="width:100%;text-align:left;cursor:pointer;background:none;border:none;border-radius:4px;"
+            onclick="document.getElementById('target-user').value='${escapeHtml(u.username)}';performLookup();">
+            <div style="flex:1;">
+              <div class="game-info" style="color:var(--accent);display:flex;align-items:center;gap:6px;">@${escapeHtml(u.username)} ${devBadge} ${earlyBadge}</div>
+              <div class="game-time">User ID: ${u.userId}</div>
+            </div>
+          </button>`;
+      }).join("");
+    } catch {
+      el.innerHTML = `<div style="color:var(--red);font-size:12px;">Couldn't load accounts.</div>`;
+    }
+  }
+function setDevState(isDev) {
+    document.getElementById('btn-grant-dev').style.display = isDev ? 'none' : 'block';
+    document.getElementById('btn-revoke-dev').style.display = isDev ? 'block' : 'none';
+  }
+  function setEarlyState(isEarly) {
+    document.getElementById('btn-grant-early').style.display = isEarly ? 'none' : 'block';
+    document.getElementById('btn-revoke-early').style.display = isEarly ? 'block' : 'none';
+  }
+  async function adminAction(action) {
+    activeUser = document.getElementById('target-user').value;
+    if (!activeUser) return;
+    if (['ban', 'pardon', 'set-username'].includes(action)) { openModal(action); return; }
+    if (action === 'reset-stats') { await resetStats(activeUser); return; }
+    if (action === 'reset-username') { await resetUsername(activeUser); return; }
+    if (action === 'close-game') { await queueForceAction(activeUser, 'close_game', 'Their game tab'); return; }
+    if (action === 'close-os') { await queueForceAction(activeUser, 'close_os', 'CheddarOS'); return; }
+    if (action === 'stress') { await queueForceAction(activeUser, 'stress', 'Client stress test'); return; }
+    if (action === 'grant-dev') { await toggleFlag('is_developer', 1, 'Developer access granted.'); return; }
+    if (action === 'revoke-dev') { await toggleFlag('is_developer', 0, 'Developer access revoked.'); return; }
+    if (action === 'grant-early') { await toggleFlag('is_early_access', 1, 'Early Supporter granted.'); return; }
+    if (action === 'revoke-early') { await toggleFlag('is_early_access', 0, 'Early Supporter revoked.'); return; }
+  }
+  async function toggleFlag(column, value, successMsg) {
+    try {
+      await runAdminSql(`UPDATE users SET ${column} = ${value} WHERE username = '${sqlEscape(activeUser)}'`);
+      await showAlert("Success", successMsg);
+      performLookup();
+    } catch (err) {
+      await showAlert("Error", "Failed to update: " + err.message);
+    }
+  }
+  async function resetStats(username) {
+    if (!(await showConfirm("Reset Stats", `Wipe all playtime stats for @${username}? This can't be undone.`, "RESET", true))) return;
+    try {
+      await runAdminSql(
+        `DELETE FROM playtime WHERE user_id = (SELECT id FROM users WHERE username = '${sqlEscape(username)}')`
+      );
+      await showAlert("Success", "Stats reset.");
+      performLookup();
+    } catch (err) {
+      await showAlert("Error", "Failed to reset stats: " + err.message);
+    }
+  }
+  async function resetUsername(username) {
+    if (!(await showConfirm("Reset Name", `Reset @${username}'s name to a cheddar_user_XXXXXXX default? They'll see a notice next time they check in.`, "RESET", true))) return;
+    try {
+      await runAdminSql(
+        `UPDATE users SET username = 'cheddar_user_' || substr('0000000' || CAST(id AS TEXT), -7), name_reset_notice = 1 WHERE username = '${sqlEscape(username)}'`
+      );
+      await showAlert("Success", "Name reset.");
+      document.getElementById('target-user').value = '';
+      document.getElementById('profile-output').style.display = 'none';
+      document.getElementById('actions-panel').style.display = 'none';
+    } catch (err) {
+      await showAlert("Error", "Failed to reset name: " + err.message);
+    }
+  }
+  // Queues a one-shot action the user's own client picks up on its next heartbeat
+  async function queueForceAction(username, action, label) {
+    try {
+      await runAdminSql(
+        `UPDATE users SET force_action = '${sqlEscape(action)}' WHERE username = '${sqlEscape(username)}'`
+      );
+      await showAlert("Queued", `${label} will run on their next check-in (up to 45s), if they're online.`);
+    } catch (err) {
+      await showAlert("Error", "Failed to queue action: " + err.message);
+    }
+  }
+  function openModal(action) {
+    currentAction = action;
+    const modal = document.getElementById('custom-modal');
+    const title = document.getElementById('modal-title');
+    const desc = document.getElementById('modal-desc');
+    const input = document.getElementById('modal-input');
+    const toggle = document.getElementById('modal-toggle-wrapper');
+    const confirmBtn = document.getElementById('modal-confirm-btn');
+    input.value = ''; confirmBtn.className = '';
+    if (action === 'ban') {
+      title.innerText = 'BAN USER'; desc.innerText = `Please enter a suspension reason for @${activeUser}:`;
+      input.style.display = 'block'; input.placeholder = 'Reason'; toggle.style.display = 'flex'; 
+      document.getElementById('modal-public-toggle').checked = true; confirmBtn.className = 'danger'; confirmBtn.innerText = 'BAN';
+    } 
+    else if (action === 'pardon') {
+      title.innerText = 'UNBAN USER'; desc.innerText = `Are you sure you want to unban @${activeUser}?`;
+      input.style.display = 'none'; toggle.style.display = 'none'; confirmBtn.className = 'success'; confirmBtn.innerText = 'UNBAN';
+    }
+    else if (action === 'set-username') {
+      title.innerText = 'SET USERNAME'; desc.innerText = `Enter a new username for @${activeUser}. Letters, numbers, and underscores only (3-20 characters).`;
+      input.style.display = 'block'; input.placeholder = 'new_username'; toggle.style.display = 'none';
+      confirmBtn.className = ''; confirmBtn.innerText = 'SET';
+    }
+    modal.style.display = 'flex';
+  }
+  function closeModal() { document.getElementById('custom-modal').style.display = 'none'; currentAction = ''; }
+  function sqlEscape(str) {
+    return String(str).replace(/'/g, "''");
+  }
+  async function runAdminSql(sql) {
+    const res = await fetch(getApiOrigin() + '/api/query', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sql }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    return data;
+  }
+  async function banUser(username, reason, isPublic) {
+    await runAdminSql(`UPDATE users SET is_banned = 1, ban_reason = '${sqlEscape(reason)}', ban_public = ${isPublic ? 1 : 0} WHERE username = '${username}'`);
+  }
+  async function pardonUser(username) {
+    await runAdminSql(`UPDATE users SET is_banned = 0, ban_reason = NULL WHERE username = '${username}'`);
+  }
+  function isValidUsername(name) {
+    return /^[a-z0-9_]{3,20}$/.test(name);
+  }
+  async function setUsername(username, newName) {
+    await runAdminSql(`UPDATE users SET username = '${sqlEscape(newName)}', name_reset_notice = 1 WHERE username = '${sqlEscape(username)}'`);
+  }
+  async function executeModalAction() {
+    const inputValue = document.getElementById('modal-input').value;
+    const confirmBtn = document.getElementById('modal-confirm-btn');
+    if (currentAction === 'ban') {
+      if (inputValue.trim() === "") { await showAlert("Error", "A reason is required to issue a ban."); return; }
+      const isPublic = document.getElementById('modal-public-toggle').checked;
+      confirmBtn.disabled = true; confirmBtn.innerText = 'BANNING...';
+      try {
+        await banUser(activeUser, inputValue.trim(), isPublic);
+        setBanState(true, inputValue.trim(), isPublic);
+        closeModal();
+      } catch (err) {
+        await showAlert("Error", "Failed to ban user: " + err.message);
+        confirmBtn.disabled = false; confirmBtn.innerText = 'BAN';
+      }
+    }
+    else if (currentAction === 'pardon') {
+      confirmBtn.disabled = true; confirmBtn.innerText = 'UNBANNING...';
+      try {
+        await pardonUser(activeUser);
+        setBanState(false);
+        closeModal();
+      } catch (err) {
+        await showAlert("Error", "Failed to pardon user: " + err.message);
+        confirmBtn.disabled = false; confirmBtn.innerText = 'UNBAN';
+      }
+    }
+    else if (currentAction === 'set-username') {
+      const newName = inputValue.trim().toLowerCase();
+      if (!isValidUsername(newName)) {
+        await showAlert("Error", "Username must be 3-20 characters, using only letters, numbers, and underscores.");
+        return;
+      }
+      confirmBtn.disabled = true; confirmBtn.innerText = 'SAVING...';
+      try {
+        await setUsername(activeUser, newName);
+        closeModal();
+        await showAlert("Success", `Username updated to @${newName}.`);
+        document.getElementById('target-user').value = newName;
+        performLookup();
+        buildAllUsersList();
+      } catch (err) {
+        await showAlert("Error", "Failed to set username: " + err.message);
+        confirmBtn.disabled = false; confirmBtn.innerText = 'SET';
+      }
+    }
+  }
+  function getApiOrigin() {
+    try {
+      if (window.top && window.top.location && window.top.location.origin && window.top.location.origin !== "null") {
+        return window.top.location.origin;
+      }
+    } catch (e) {
+    }
+    return (window.location.origin && window.location.origin !== "null") ? window.location.origin : "";
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+  }
+  const COMMANDS = [
+    { name: "help", usage: "help", desc: "List all available commands" },
+    { name: "clear", usage: "clear", desc: "Clear the console output log" },
+    { name: "tables", usage: "tables", desc: "List all tables in the database", sql: "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name" },
+    { name: "users", usage: "users", desc: "List all registered users", sql: "SELECT id, username, is_developer, created_at FROM users ORDER BY id" },
+    { name: "add_developer", usage: "add_developer <userID>", desc: "Grant developer access to a user by ID",
+      build: (args) => {
+        const id = args[0];
+        if (!/^\d+$/.test(id || "")) throw new Error("Usage: add_developer <userID> -- userID must be a whole number.");
+        return `UPDATE users SET is_developer = 1 WHERE id = ${id}`;
+      } },
+    { name: "remove_developer", usage: "remove_developer <userID>", desc: "Revoke developer access from a user by ID",
+      build: (args) => {
+        const id = args[0];
+        if (!/^\d+$/.test(id || "")) throw new Error("Usage: remove_developer <userID> -- userID must be a whole number.");
+        return `UPDATE users SET is_developer = 0 WHERE id = ${id}`;
+      } },
+  ];
+  function renderCommandTable() {
+    const rows = COMMANDS.map(c =>
+      `<tr><td>${escapeHtml(c.name)}</td><td>${escapeHtml(c.usage)}</td><td style="color:var(--muted);">${escapeHtml(c.desc)}</td></tr>`
+    ).join("");
+    return `<table class="sql-grid"><thead><tr><th>Command</th><th>Usage</th><th>Description</th></tr></thead><tbody>${rows}</tbody></table>` +
+      `<div style="color: var(--muted); font-size: 12px;">Anything else typed is run as raw SQL, e.g. <span style="color: var(--github-blue);">SELECT * FROM users LIMIT 10;</span></div>`;
+  }
+  function appendToOutput(html) {
+    const el = document.getElementById('sql-workbench-output');
+    el.insertAdjacentHTML('beforeend', html);
+    el.scrollTop = el.scrollHeight;
+  }
+  function clearWorkbenchLogs() {
+    document.getElementById('sql-workbench-output').innerHTML = renderCommandTable();
+  }
+  function renderRows(rows) {
+    if (!rows.length) return "";
+    const cols = Object.keys(rows[0]);
+    const head = `<tr>${cols.map(c => `<th>${escapeHtml(c)}</th>`).join("")}</tr>`;
+    const body = rows.map(r =>
+      `<tr>${cols.map(c => `<td>${escapeHtml(r[c] ?? "")}</td>`).join("")}</tr>`
+    ).join("");
+    return `<table class="sql-grid"><thead>${head}</thead><tbody>${body}</tbody></table>`;
+  }
+  async function runSql(sql) {
+    const res = await fetch(getApiOrigin() + '/api/query', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sql }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      appendToOutput(`
+        <div style="color: var(--red); font-weight: bold; margin: 6px 0 2px;">❌ D1 Error</div>
+        <span style="color: var(--muted);">${escapeHtml(data.error || ('HTTP ' + res.status))}</span>`);
+      return;
+    }
+    const parts = [];
+    if (data.rowCount) parts.push(`${data.rowCount} row${data.rowCount === 1 ? '' : 's'} fetched`);
+    if (data.meta.changes) parts.push(`${data.meta.changes} row${data.meta.changes === 1 ? '' : 's'} changed`);
+    if (data.meta.lastRowId != null && data.meta.changes) parts.push(`last id ${data.meta.lastRowId}`);
+    parts.push(`${data.meta.durationMs}ms`);
+    appendToOutput(`
+      ${renderRows(data.rows)}
+      <div style="color: var(--green); font-weight: bold; margin-top: 8px;">✔ Success: <span style="color:var(--muted); font-weight:normal;">${parts.join(' &middot; ')}</span></div>`);
+  }
+  async function executeWorkbenchSQL() {
+    const inputEl = document.getElementById('sql-workbench-input');
+    const raw = inputEl.value.trim();
+    if (!raw) return;
+    hideAutocomplete();
+    if (raw.toLowerCase() === "clear") {
+      clearWorkbenchLogs();
+      inputEl.value = "";
+      return;
+    }
+    const runBtn = document.getElementById('run-query-btn');
+    runBtn.disabled = true;
+    appendToOutput(`<div style="color: var(--accent); margin: 14px 0 6px; border-top: 1px dashed var(--border); padding-top: 14px;">&gt; ${escapeHtml(raw)}</div>`);
+    try {
+      const parts = raw.split(/\s+/);
+      const cmdName = parts[0].toLowerCase();
+      const args = parts.slice(1);
+      const command = COMMANDS.find(c => c.name === cmdName);
+      if (cmdName === "help") {
+        appendToOutput(renderCommandTable());
+      } else if (command && command.sql) {
+        await runSql(command.sql);
+      } else if (command && command.build) {
+        let sql;
+        try {
+          sql = command.build(args);
+        } catch (err) {
+          appendToOutput(`<span style="color: var(--red);">[Error] ${escapeHtml(err.message)}</span>`);
+          return;
+        }
+        await runSql(sql);
+      } else {
+        await runSql(raw);
+      }
+      inputEl.value = "";
+    } finally {
+      runBtn.disabled = false;
+    }
+  }
+  const acDropdown = document.getElementById('command-autocomplete');
+  const cmdInput = document.getElementById('sql-workbench-input');
+  let acMatches = [];
+  let acIndex = -1;
+  function hideAutocomplete() {
+    acDropdown.style.display = 'none';
+    acDropdown.innerHTML = '';
+    acMatches = [];
+    acIndex = -1;
+  }
+  function renderAutocomplete() {
+    acDropdown.innerHTML = acMatches.map((c, i) => `
+      <div class="autocomplete-item${i === acIndex ? ' active' : ''}" data-idx="${i}">
+        <span class="cmd-name">${escapeHtml(c.name)}</span>
+        <span class="cmd-usage">${escapeHtml(c.usage)}</span>
+        <span class="cmd-desc">${escapeHtml(c.desc)}</span>
+      </div>`).join('');
+    acDropdown.style.display = acMatches.length ? 'block' : 'none';
+    acDropdown.querySelectorAll('.autocomplete-item').forEach(el => {
+      el.onclick = () => { acIndex = Number(el.dataset.idx); applyAutocomplete(); };
+    });
+  }
+  function updateAutocomplete() {
+    const val = cmdInput.value;
+    if (!val || /\s/.test(val)) { hideAutocomplete(); return; }
+    const q = val.toLowerCase();
+    acMatches = COMMANDS.filter(c => c.name.startsWith(q));
+    acIndex = acMatches.length ? 0 : -1;
+    renderAutocomplete();
+  }
+  function applyAutocomplete() {
+    if (acIndex < 0 || !acMatches[acIndex]) return;
+    cmdInput.value = acMatches[acIndex].name + " ";
+    hideAutocomplete();
+    cmdInput.focus();
+  }
+  cmdInput.addEventListener('input', updateAutocomplete);
+  cmdInput.addEventListener('keydown', (e) => {
+    if (acDropdown.style.display === 'block' && acMatches.length) {
+      if (e.key === 'ArrowDown') { e.preventDefault(); acIndex = Math.min(acIndex + 1, acMatches.length - 1); renderAutocomplete(); return; }
+      if (e.key === 'ArrowUp') { e.preventDefault(); acIndex = Math.max(acIndex - 1, 0); renderAutocomplete(); return; }
+      if (e.key === 'Tab') { e.preventDefault(); applyAutocomplete(); return; }
+      if (e.key === 'Escape') { hideAutocomplete(); return; }
+    }
+    if (e.key === 'Enter') { e.preventDefault(); executeWorkbenchSQL(); }
+  });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.console-input-row')) hideAutocomplete();
+  });
+  clearWorkbenchLogs();
+  buildAllUsersList();
+</script>
+</body>
+</html>
