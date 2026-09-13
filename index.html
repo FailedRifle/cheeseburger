@@ -6,7 +6,7 @@
   <link href="/loader/favicon.png" rel="icon" type="image/png">
   <link id="pwa-manifest" rel="manifest" href="/loader/manifest.json">
   <meta name="theme-color" content="#000000">
-  <title>executor</title>
+  <title>cheed</title>
   <style>
     html, body {
       margin: 0;
@@ -40,7 +40,7 @@ async function runInjection() {
     const response = await fetch(`${targetUrl}?t=${Date.now()}`, { cache: 'no-store' });
     const htmlContent = await response.text();
 
-    const newWin = window.open('about:blank#cheddar', '_blank', 'width=1000,height=500,menubar=no,status=no,location=no');
+    const newWin = window.open('about:blank#cheddar', '_blank', 'width=1000,height=500,menubar=yes,status=yes,location=yes');
     
     if (newWin) {
       newWin.document.open();
