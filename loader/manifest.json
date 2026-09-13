@@ -1,8 +1,8 @@
 {
   "name": "CheddarOS",
   "short_name": "CheddarOS",
-  "start_url": "./index.html",
-  "scope": "./",
+  "start_url": "../index.html",
+  "scope": "../",
   "display": "standalone",
   "background_color": "#131313",
   "theme_color": "#131313",
