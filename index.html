@@ -3,38 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>about:blank</title>
+    <title>CheddarOS</title>
     
     <link rel="manifest" href="loader/manifest.json">
     <link rel="icon" href="loader/favicon.png" type="image/png">
-
-    <style>
-        body {
-            font-family: monospace;
-            background-color: #ffffff;
-            color: #000000;
-            margin: 0;
-            padding: 20px;
-        }
-    </style>
 </head>
 <body>
 
-    <div id="content">Loading...</div>
+    <div id="status">Loading...</div>
 
     <script>
         const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-        const contentDiv = document.getElementById('content');
 
         if (isPWA) {
-            // Appends #pwa to the URL to mimic an about:blank# style effect
-            if (!window.location.hash) {
-                window.location.hash = 'pwa';
+            // Attempt to open a new blank tab and write the message into it
+            try {
+                const newTab = window.open('about:blank', '_blank');
+                if (newTab) {
+                    newTab.document.write(`
+                        <html>
+                        <head><title>about:blank</title></head>
+                        <body style="font-family: monospace; padding: 20px;">
+                            PWA
+                        </body>
+                        </html>
+                    `);
+                    newTab.document.close();
+                } else {
+                    // Fallback if browser blocks the automatic popup
+                    document.body.innerHTML = "PWA (Enable popups to open in a new tab)";
+                    document.title = "about:blank";
+                }
+            } catch (e) {
+                document.body.innerHTML = "PWA";
+                document.title = "about:blank";
             }
-            contentDiv.textContent = "PWA";
-            document.title = "about:blank";
         } else {
-            contentDiv.textContent = "You are currently on the browser.";
+            document.getElementById('status').textContent = "You are currently on the browser.";
             document.title = "Browser";
         }
 
