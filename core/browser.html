@@ -1,1 +1,690 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CheddarOS</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background-color: #121212;
+      color: #e0e0e0;
+    }
 
+    .browser {
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      flex-direction: column;
+      background: #1a1a1a;
+    }
+
+    /* Tabs */
+    .tab-strip {
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      background: #0e0e0e;
+      padding: 8px 8px 0;
+    }
+    .tab {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      background: #1e1e1e;
+      border: 1px solid #333;
+      border-bottom: none;
+      border-radius: 6px 6px 0 0;
+      font-size: 13px;
+      color: #b0b0b0;
+      max-width: 180px;
+    }
+    .tab.active { background: #1a1a1a; color: #fff; }
+    .tab .favicon { width: 10px; height: 10px; border-radius: 2px; background: #555; flex-shrink: 0; }
+    .tab .title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tab .close { color: #666; font-size: 14px; line-height: 1; }
+    .tab-new { padding: 8px 10px; color: #666; font-size: 16px; line-height: 1; }
+
+    /* Toolbar */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: #1a1a1a;
+      border-bottom: 1px solid #333;
+      position: relative;
+    }
+    .nav-btn {
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #262626;
+      border: 1px solid #3a3a3a;
+      border-radius: 6px;
+      color: #999;
+      font-size: 14px;
+      flex-shrink: 0;
+      user-select: none;
+    }
+    .nav-btn:hover { background: #2e2e2e; color: #ccc; }
+    .nav-btn.disabled { opacity: 0.4; }
+    .address-bar {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 14px;
+      background: #262626;
+      border: 1px solid #3a3a3a;
+      border-radius: 20px;
+      color: #ccc;
+    }
+    .address-bar .lock { color: #6b8; font-size: 12px; }
+    .address-bar input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #eee;
+      font-size: 13px;
+      font-family: inherit;
+    }
+    .toolbar-icon {
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #999;
+      font-size: 14px;
+      flex-shrink: 0;
+      user-select: none;
+      border-radius: 6px;
+    }
+    .toolbar-icon:hover { color: #ccc; background: #232323; }
+
+    .profile-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #262626;
+      border: 1px solid #3a3a3a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+    .profile-avatar:hover { background: #2e2e2e; }
+
+    /* Account panel - drops down right under the toolbar, Google-style */
+    .account-panel {
+      position: absolute;
+      top: 100%;
+      right: 14px;
+      margin-top: 6px;
+      background: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: 12px;
+      width: 240px;
+      padding: 16px;
+      display: none;
+      z-index: 20;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+    }
+    .account-panel.open { display: block; }
+    .account-panel .panel-user {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .account-panel .panel-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #2a2a2a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .account-panel .panel-name { font-size: 13px; color: #eee; }
+    .account-panel .panel-sub { font-size: 11px; color: #777; margin-top: 2px; }
+    .account-panel .panel-note {
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 14px;
+      line-height: 1.4;
+    }
+    .panel-divider {
+      border-top: 1px solid #2a2a2a;
+      margin: 10px 0;
+    }
+    .panel-action {
+      display: block;
+      width: 100%;
+      text-align: center;
+      padding: 9px 0;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    .panel-action.primary { background: #fff; color: #000; font-weight: 600; }
+    .panel-action.primary:hover { background: #ddd; }
+    .panel-action.secondary { background: transparent; color: #ccc; border: 1px solid #3a3a3a; }
+    .panel-action.secondary:hover { background: #262626; }
+    .panel-link {
+      display: block;
+      text-align: center;
+      font-size: 12px;
+      color: #888;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    .panel-link:hover { color: #ccc; }
+
+    .bookmarks-bar {
+      display: flex;
+      gap: 18px;
+      padding: 6px 16px;
+      background: #171717;
+      border-bottom: 1px solid #2a2a2a;
+      font-size: 12px;
+      color: #888;
+    }
+
+    /* Viewport */
+    .viewport {
+      flex: 1;
+      background: #0f0f0f;
+      overflow-y: auto;
+    }
+    .view { display: none; height: 100%; }
+    .view.active { display: flex; }
+
+    /* Home view */
+    #view-home { align-items: center; justify-content: center; }
+    .homepage {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 40px;
+      padding: 40px 20px;
+      width: 100%;
+    }
+    .logo { font-size: 56px; font-weight: 700; letter-spacing: -1px; color: #f0f0f0; }
+    .search-box {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 560px;
+      max-width: 80vw;
+      padding: 12px 20px;
+      background: #262626;
+      border: 1px solid #3a3a3a;
+      border-radius: 24px;
+      color: #888;
+      font-size: 15px;
+    }
+    .search-box .search-icon { color: #666; font-size: 14px; }
+
+    .apps-section {
+      width: 100%;
+      max-width: 640px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+    }
+    .apps-label { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #666; }
+    .apps-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 26px; }
+    .app { display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; width: 64px; }
+    .app .app-icon {
+      width: 52px; height: 52px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; background: #1e1e1e;
+      transition: transform 0.12s ease, background 0.12s ease;
+    }
+    .app:hover .app-icon { background: #262626; transform: scale(1.06); }
+    .app .app-label { font-size: 11px; color: #999; text-align: center; }
+
+    /* Generic page */
+    #view-settings, #view-account { align-items: flex-start; justify-content: flex-start; }
+    #view-users, #view-signin, #view-register { align-items: center; justify-content: flex-start; }
+    .page { width: 100%; padding: 40px 60px; }
+    .page h2 { font-size: 20px; color: #fff; margin: 0 0 24px; font-weight: 600; }
+    .empty-note { color: #555; font-size: 14px; }
+
+    /* Users view - Google account-chooser style */
+    .users-page { display: flex; flex-direction: column; align-items: center; gap: 24px; padding: 60px 20px; width: 100%; }
+    .users-page h2 { font-size: 22px; color: #fff; font-weight: 500; margin: 0; }
+    .users-search {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 16px; background: #1e1e1e; border: 1px solid #333;
+      border-radius: 24px; width: 320px;
+    }
+    .users-search input { flex: 1; background: transparent; border: none; outline: none; color: #eee; font-size: 13px; font-family: inherit; }
+    .users-search .search-icon { color: #666; font-size: 13px; }
+    .users-list-card { background: #161616; border: 1px solid #262626; border-radius: 16px; width: 360px; max-width: 90vw; overflow: hidden; }
+    .user-row { display: flex; align-items: center; gap: 16px; padding: 16px 20px; cursor: pointer; border-bottom: 1px solid #212121; }
+    .user-row:last-child { border-bottom: none; }
+    .user-row:hover { background: #1c1c1c; }
+    .user-avatar { width: 44px; height: 44px; border-radius: 50%; background: #262626; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    .user-info .user-name { font-size: 14px; color: #eee; }
+    .user-info .user-id { font-size: 12px; color: #666; margin-top: 2px; }
+
+    /* User / account page */
+    .account-page { width: 100%; display: flex; flex-direction: column; align-items: center; padding: 60px 20px; gap: 6px; }
+    .account-avatar-lg { width: 88px; height: 88px; border-radius: 50%; background: #262626; display: flex; align-items: center; justify-content: center; font-size: 36px; margin-bottom: 16px; }
+    .account-name { font-size: 20px; color: #fff; font-weight: 500; }
+    .account-id { font-size: 13px; color: #888; margin-top: 4px; }
+    .account-divider { width: 320px; max-width: 80vw; border-top: 1px solid #262626; margin: 20px 0; }
+    .account-created { font-size: 12px; color: #666; }
+
+    /* Auth pages */
+    .auth-page { width: 100%; display: flex; justify-content: center; padding: 70px 20px; }
+    .auth-card {
+      width: 320px;
+      max-width: 90vw;
+      background: #161616;
+      border: 1px solid #262626;
+      border-radius: 16px;
+      padding: 32px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .auth-card h2 { margin: 0 0 8px; font-size: 20px; color: #fff; font-weight: 600; text-align: center; }
+    .auth-card input {
+      padding: 11px 14px;
+      background: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: 8px;
+      color: #eee;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+    }
+    .auth-card input:focus { border-color: #555; }
+    .auth-error { color: #e07b7b; font-size: 12px; min-height: 16px; }
+    .auth-submit {
+      margin-top: 6px;
+      padding: 10px 0;
+      background: #fff;
+      color: #000;
+      font-weight: 600;
+      font-size: 13px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .auth-submit:hover { background: #ddd; }
+    .auth-alt { text-align: center; font-size: 12px; color: #888; margin-top: 8px; }
+    .auth-link { color: #ccc; cursor: pointer; text-decoration: underline; }
+    .auth-link:hover { color: #fff; }
+  </style>
+</head>
+<body>
+  <div class="browser">
+    <div class="tab-strip">
+      <div class="tab active">
+        <span class="favicon"></span>
+        <span class="title" id="tab-title">New Tab</span>
+        <span class="close">×</span>
+      </div>
+      <div class="tab-new">+</div>
+    </div>
+
+    <div class="toolbar">
+      <div class="nav-btn" id="back-btn">‹</div>
+      <div class="nav-btn" id="fwd-btn">›</div>
+      <div class="nav-btn" id="reload-btn">↻</div>
+      <div class="nav-btn" id="home-btn">⌂</div>
+      <div class="address-bar">
+        <span class="lock">🔒</span>
+        <input type="text" id="address-input" value="cheddar://home" spellcheck="false">
+      </div>
+      <div class="toolbar-icon">☆</div>
+      <div class="toolbar-icon" id="settings-btn">⚙️</div>
+      <div class="profile-avatar" id="profile-btn">👤</div>
+
+      <div class="account-panel" id="account-panel"></div>
+    </div>
+
+    <div class="bookmarks-bar">
+      <span>Bookmark 1</span>
+      <span>Bookmark 2</span>
+      <span>Bookmark 3</span>
+    </div>
+
+    <div class="viewport">
+
+      <!-- cheddar://home -->
+      <div class="view active" id="view-home">
+        <div class="homepage">
+          <div class="logo">CheddarOS</div>
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <span>Search CheddarOS or type a URL</span>
+          </div>
+          <div class="apps-section">
+            <div class="apps-label">Apps</div>
+            <div class="apps-row">
+              <div class="app" data-nav=""><div class="app-icon">🎮</div><div class="app-label">Game Hub</div></div>
+              <div class="app" data-nav=""><div class="app-icon">🛒</div><div class="app-label">App Store</div></div>
+              <div class="app" data-nav=""><div class="app-icon">💬</div><div class="app-label">Chat</div></div>
+              <div class="app" data-nav=""><div class="app-icon">🎵</div><div class="app-label">Media</div></div>
+              <div class="app" data-nav=""><div class="app-icon">📁</div><div class="app-label">Files</div></div>
+              <div class="app" data-nav="cheddar://users"><div class="app-icon">👥</div><div class="app-label">Users</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- cheddar://settings -->
+      <div class="view" id="view-settings">
+        <div class="page">
+          <h2>Settings</h2>
+          <div class="empty-note">Nothing here yet.</div>
+        </div>
+      </div>
+
+      <!-- cheddar://users -->
+      <div class="view" id="view-users">
+        <div class="users-page">
+          <h2>Choose an account</h2>
+          <div class="users-search">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="user-search-input" placeholder="Search users">
+          </div>
+          <div class="users-list-card" id="users-list"></div>
+        </div>
+      </div>
+
+      <!-- cheddar://user-* -->
+      <div class="view" id="view-account">
+        <div class="account-page" id="account-content"></div>
+      </div>
+
+      <!-- cheddar://sign-in -->
+      <div class="view" id="view-signin">
+        <div class="auth-page">
+          <div class="auth-card">
+            <h2>Sign in</h2>
+            <input type="text" id="signin-username" placeholder="Username">
+            <input type="password" id="signin-password" placeholder="Password">
+            <div class="auth-error" id="signin-error"></div>
+            <button class="auth-submit" id="signin-submit">Sign in</button>
+            <div class="auth-alt">No account? <span class="auth-link" data-nav="cheddar://register">Register</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- cheddar://register -->
+      <div class="view" id="view-register">
+        <div class="auth-page">
+          <div class="auth-card">
+            <h2>Create account</h2>
+            <input type="text" id="register-username" placeholder="Username">
+            <input type="password" id="register-password" placeholder="Password">
+            <input type="password" id="register-confirm" placeholder="Confirm password">
+            <div class="auth-error" id="register-error"></div>
+            <button class="auth-submit" id="register-submit">Create account</button>
+            <div class="auth-alt">Already have an account? <span class="auth-link" data-nav="cheddar://sign-in">Sign in</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- unresolved route -->
+      <div class="view" id="view-notfound">
+        <div class="page">
+          <h2>This page can't be reached</h2>
+          <div class="empty-note" id="notfound-detail"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // ---- In-memory mock data (Vercel DB / real auth wired up later) ----
+    const users = [
+      { id: 999, username: "john_doe", created: "March 3, 2021" }
+    ];
+    let nextId = 1000;
+    let currentUser = null; // nobody is signed in by default
+
+    const addressInput = document.querySelector("#address-input");
+    const tabTitle = document.querySelector("#tab-title");
+    const views = document.querySelectorAll(".view");
+    const profileBtn = document.querySelector("#profile-btn");
+    const accountPanel = document.querySelector("#account-panel");
+
+    let history = ["cheddar://home"];
+    let historyIndex = 0;
+
+    function showView(id) {
+      views.forEach(v => v.classList.remove("active"));
+      document.querySelector("#" + id).classList.add("active");
+    }
+
+    function formatToday() {
+      const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+      const d = new Date();
+      return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+    }
+
+    function renderUsersList(filter = "") {
+      const list = document.querySelector("#users-list");
+      list.innerHTML = "";
+      const filtered = users.filter(u =>
+        u.username.toLowerCase().includes(filter.toLowerCase()) ||
+        String(u.id).includes(filter)
+      );
+      if (filtered.length === 0) {
+        list.innerHTML = '<div class="empty-note" style="padding:16px 20px;">No users found.</div>';
+        return;
+      }
+      filtered.forEach(u => {
+        const row = document.createElement("div");
+        row.className = "user-row";
+        row.dataset.nav = `cheddar://user-${u.id}`;
+        row.innerHTML = `
+          <div class="user-avatar">🙂</div>
+          <div class="user-info">
+            <div class="user-name">${u.username}</div>
+            <div class="user-id">ID: ${u.id}</div>
+          </div>
+        `;
+        row.addEventListener("click", () => navigate(row.dataset.nav));
+        list.appendChild(row);
+      });
+    }
+
+    function renderAccount(id) {
+      const content = document.querySelector("#account-content");
+      const user = users.find(u => String(u.id) === String(id));
+      if (!user) {
+        content.innerHTML = `<div class="empty-note">No user found for ID ${id}.</div>`;
+        return;
+      }
+      content.innerHTML = `
+        <div class="account-avatar-lg">🙂</div>
+        <div class="account-name">${user.username}</div>
+        <div class="account-id">User ID: ${user.id}</div>
+        <div class="account-divider"></div>
+        <div class="account-created">Account created: ${user.created}</div>
+      `;
+    }
+
+    function renderAccountPanel() {
+      if (currentUser) {
+        accountPanel.innerHTML = `
+          <div class="panel-user">
+            <div class="panel-avatar">🙂</div>
+            <div>
+              <div class="panel-name">${currentUser.username}</div>
+              <div class="panel-sub">ID: ${currentUser.id}</div>
+            </div>
+          </div>
+          <div class="panel-action secondary" id="panel-view-account">View account</div>
+          <div class="panel-divider"></div>
+          <div class="panel-action secondary" id="panel-sign-out">Sign out</div>
+        `;
+        document.querySelector("#panel-view-account").addEventListener("click", () => {
+          navigate(`cheddar://user-${currentUser.id}`);
+        });
+        document.querySelector("#panel-sign-out").addEventListener("click", () => {
+          currentUser = null;
+          renderAccountPanel();
+          updateProfileIcon();
+          closeAccountPanel();
+          navigate("cheddar://home");
+        });
+      } else {
+        accountPanel.innerHTML = `
+          <div class="panel-note">You're not signed in to CheddarOS.</div>
+          <div class="panel-action primary" id="panel-sign-in">Sign in</div>
+          <div class="panel-link" id="panel-register">Create an account</div>
+        `;
+        document.querySelector("#panel-sign-in").addEventListener("click", () => navigate("cheddar://sign-in"));
+        document.querySelector("#panel-register").addEventListener("click", () => navigate("cheddar://register"));
+      }
+    }
+
+    function updateProfileIcon() {
+      profileBtn.textContent = currentUser ? "🙂" : "👤";
+      profileBtn.title = currentUser ? currentUser.username : "Not signed in";
+    }
+
+    function closeAccountPanel() {
+      accountPanel.classList.remove("open");
+    }
+
+    function navigate(url, addToHistory = true) {
+      url = url.trim();
+      addressInput.value = url;
+      closeAccountPanel();
+
+      if (url === "cheddar://home") {
+        showView("view-home");
+        tabTitle.textContent = "New Tab";
+      } else if (url === "cheddar://settings") {
+        showView("view-settings");
+        tabTitle.textContent = "Settings";
+      } else if (url === "cheddar://users") {
+        renderUsersList();
+        showView("view-users");
+        tabTitle.textContent = "Choose an account";
+      } else if (url === "cheddar://sign-in") {
+        document.querySelector("#signin-error").textContent = "";
+        showView("view-signin");
+        tabTitle.textContent = "Sign in";
+      } else if (url === "cheddar://register") {
+        document.querySelector("#register-error").textContent = "";
+        showView("view-register");
+        tabTitle.textContent = "Create account";
+      } else if (url.startsWith("cheddar://user-")) {
+        const id = url.replace("cheddar://user-", "");
+        renderAccount(id);
+        showView("view-account");
+        tabTitle.textContent = "Account";
+      } else {
+        document.querySelector("#notfound-detail").textContent = `CheddarOS couldn't find "${url}".`;
+        showView("view-notfound");
+        tabTitle.textContent = "Not found";
+      }
+
+      if (addToHistory) {
+        history = history.slice(0, historyIndex + 1);
+        history.push(url);
+        historyIndex = history.length - 1;
+      }
+      updateNavButtons();
+    }
+
+    function updateNavButtons() {
+      document.querySelector("#back-btn").classList.toggle("disabled", historyIndex <= 0);
+      document.querySelector("#fwd-btn").classList.toggle("disabled", historyIndex >= history.length - 1);
+    }
+
+    document.querySelector("#back-btn").addEventListener("click", () => {
+      if (historyIndex > 0) { historyIndex--; navigate(history[historyIndex], false); }
+    });
+    document.querySelector("#fwd-btn").addEventListener("click", () => {
+      if (historyIndex < history.length - 1) { historyIndex++; navigate(history[historyIndex], false); }
+    });
+    document.querySelector("#reload-btn").addEventListener("click", () => navigate(history[historyIndex], false));
+    document.querySelector("#home-btn").addEventListener("click", () => navigate("cheddar://home"));
+    document.querySelector("#settings-btn").addEventListener("click", () => navigate("cheddar://settings"));
+
+    addressInput.addEventListener("keydown", (e) => { if (e.key === "Enter") navigate(addressInput.value); });
+
+    document.querySelectorAll(".app").forEach(app => {
+      app.addEventListener("click", () => { const dest = app.dataset.nav; if (dest) navigate(dest); });
+    });
+
+    document.querySelector("#user-search-input").addEventListener("input", (e) => renderUsersList(e.target.value));
+
+    document.querySelectorAll(".auth-link").forEach(link => {
+      link.addEventListener("click", () => navigate(link.dataset.nav));
+    });
+
+    // Profile avatar -> toggles the account panel right under the toolbar
+    profileBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      accountPanel.classList.toggle("open");
+    });
+    document.addEventListener("click", () => closeAccountPanel());
+    accountPanel.addEventListener("click", (e) => e.stopPropagation());
+
+    // ---- Mock auth logic (front-end only for now; no real backend yet) ----
+    document.querySelector("#signin-submit").addEventListener("click", () => {
+      const username = document.querySelector("#signin-username").value.trim();
+      const errorEl = document.querySelector("#signin-error");
+      if (!username) { errorEl.textContent = "Enter a username."; return; }
+      const user = users.find(u => u.username.toLowerCase() === username.toLowerCase());
+      if (!user) { errorEl.textContent = "No account found with that username."; return; }
+      currentUser = user;
+      updateProfileIcon();
+      renderAccountPanel();
+      navigate("cheddar://home");
+    });
+
+    document.querySelector("#register-submit").addEventListener("click", () => {
+      const username = document.querySelector("#register-username").value.trim();
+      const password = document.querySelector("#register-password").value;
+      const confirm = document.querySelector("#register-confirm").value;
+      const errorEl = document.querySelector("#register-error");
+
+      if (!username) { errorEl.textContent = "Choose a username."; return; }
+      if (users.some(u => u.username.toLowerCase() === username.toLowerCase())) {
+        errorEl.textContent = "That username is already taken."; return;
+      }
+      if (!password || password !== confirm) { errorEl.textContent = "Passwords don't match."; return; }
+
+      const newUser = { id: nextId++, username, created: formatToday() };
+      users.push(newUser);
+      currentUser = newUser;
+      updateProfileIcon();
+      renderAccountPanel();
+      navigate("cheddar://home");
+    });
+
+    renderAccountPanel();
+    updateProfileIcon();
+    updateNavButtons();
+  </script>
+</body>
+</html>
