@@ -129,9 +129,10 @@
       flex: 1;
       background: #0f0f0f;
       overflow-y: auto;
+      overflow-x: hidden;
       position: relative;
     }
-    .pane { display: none; height: 100%; width: 100%; }
+    .pane { display: none; height: 100%; width: 100%; align-items: stretch; }
     .pane.active { display: flex; }
     .pane iframe {
       width: 100%;
@@ -140,8 +141,8 @@
       background: #0f0f0f;
     }
 
-    .view { display: none; height: 100%; }
-    .view.active { display: flex; }
+    .view { display: none; height: 100%; width: 100%; }
+    .view.active { display: flex; flex: 1; }
 
     /* Home view */
     #view-home { align-items: center; justify-content: center; }
@@ -152,6 +153,9 @@
       gap: 40px;
       padding: 40px 20px;
       width: 100%;
+      max-width: 680px;
+      margin: 0 auto;
+      box-sizing: border-box;
     }
     .logo { font-size: 56px; font-weight: 700; letter-spacing: -1px; color: #f0f0f0; }
     .search-box {
@@ -379,7 +383,7 @@
     }
 
     function openGamesTab() {
-      const tab = makeAppTab("CheddarGames", "games.html", "cheddar://games");
+      const tab = makeAppTab("CheddarGames", "core/games.html", "cheddar://games");
       tabs.push(tab);
       buildPane(tab);
       switchToTab(tab.id);
