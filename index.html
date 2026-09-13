@@ -14,19 +14,37 @@
             color: #555555;
             font-family: 'Roboto Mono', monospace;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             height: 100vh;
             font-size: 14px;
             font-weight: 300;
+            gap: 15px;
+        }
+        #install-btn {
+            background: transparent;
+            border: 1px solid #555555;
+            color: #888888;
+            font-family: 'Roboto Mono', monospace;
+            padding: 8px 16px;
+            cursor: pointer;
+            border-radius: 4px;
+            display: none;
+        }
+        #install-btn:hover {
+            border-color: #888888;
+            color: #ffffff;
         }
     </style>
 </head>
 <body>
-    <div id="status"></div>
+    <div id="status">Please install the app to continue using CheddarOS</div>
+    <button id="install-btn">Install CheddarOS</button>
     <script>
         const installable = false;
         const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+        let deferredPrompt;
 
         if (isPWA && installable) {
             fetch('core/browser.html')
@@ -47,13 +65,24 @@
                 .catch(() => {
                     document.body.textContent = "Error loading core/browser.html";
                 });
-        } else {
-            document.getElementById('status').textContent = "Please install the app to continue using CheddarOS";
-        }
+        } else if (installable) {
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                document.getElementById('install-btn').style.display = 'block';
+            });
 
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('loader/service-worker.js', { scope: './' }).catch(() => {});
+            document.getElementById('install-btn').addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    if (outcome === 'accepted') {
+                        if ('serviceWorker' in navigator) {
+                            await navigator.serviceWorker.register('loader/service-worker.js', { scope: './' });
+                        }
+                    }
+                    deferredPrompt = null;
+                }
             });
         }
     </script>
