@@ -7,7 +7,7 @@ import {
   registerSW,
   getProxyType,
 } from "/lithium.mjs";
-import("/glass/glassJS.config.js");
+import("/uv/uv.config.js");
 console.log("search.js loaded");
 let iframe;
 let transportx;

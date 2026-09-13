@@ -57,6 +57,8 @@ const transportOptions = {
 //////////////////////////////
 ///           SW           ///
 //////////////////////////////
+// The combined worker owns the root scope so both UV and Scramjet work in
+// every browser tab. It loads the canonical /uv and /scram asset trees.
 const stockSW = "/ultraworker.js";
 const swAllowedHostnames = ["localhost", "127.0.0.1"];
 

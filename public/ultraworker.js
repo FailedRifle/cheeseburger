@@ -1,7 +1,7 @@
 importScripts("scram/scramjet.all.js");
-importScripts("glass/glassJS.bundle.js");
-importScripts("glass/glassJS.config.js");
-importScripts("glass/glassJS.sw.js");
+importScripts("uv/uv.bundle.js");
+importScripts("uv/uv.config.js");
+importScripts("uv/uv.sw.js");
 
 if (navigator.userAgent.includes("Firefox")) {
   Object.defineProperty(globalThis, "crossOriginIsolated", {
