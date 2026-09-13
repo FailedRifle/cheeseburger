@@ -1,6 +1,11 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "fluid": true,
+  "functions": {
+    "api/*.js": {
+      "maxDuration": 300
+    }
+  },
   "rewrites": [
     { "source": "/wisp/:path*", "destination": "/api/wisp" },
     { "source": "/report-bug", "destination": "/api/index" },
