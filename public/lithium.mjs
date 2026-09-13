@@ -1,7 +1,7 @@
 //////////////////////////////
 ///          Init          ///
 //////////////////////////////
-import { BareMuxConnection } from "https://unpkg.com/@mercuryworkshop/bare-mux@2.1.7/dist/index.mjs";
+import { BareMuxConnection } from "/baremux/index.js";
 //////////////////////////////
 ///         Options        ///
 //////////////////////////////
@@ -16,12 +16,17 @@ export let framesElement;
 export let currentFrame;
 export const addressInput = document.getElementById("address");
 
-requestIdleCallback(async () => {
+let scramjet;
+let scramjetReady;
+
+async function initializeScramjet() {
+  if (scramjet) return scramjet;
+  if (!scramjetReady) scramjetReady = (async () => {
   await import(`/scram/scramjet.all.js`);
 
   const { ScramjetController } = window.$scramjetLoadController();
 
-  const scramjet = new ScramjetController({
+  scramjet = new ScramjetController({
     files: {
       wasm: `/scram/scramjet.wasm.wasm`,
       all: `/scram/scramjet.all.js`,
@@ -36,7 +41,10 @@ requestIdleCallback(async () => {
 
   scramjet.init();
   window.scramjet = scramjet;
-});
+  return scramjet;
+  })();
+  return scramjetReady;
+}
 const transportOptions = {
   epoxy:
     "https://unpkg.com/@mercuryworkshop/epoxy-transport@2.1.27/dist/index.mjs",
@@ -47,7 +55,7 @@ const transportOptions = {
 //////////////////////////////
 ///           SW           ///
 //////////////////////////////
-const stockSW = "./ultraworker.js";
+const stockSW = "/ultraworker.js";
 const swAllowedHostnames = ["localhost", "127.0.0.1"];
 
 /**
@@ -66,7 +74,11 @@ export async function registerSW() {
     throw new Error("Your browser doesn't support service workers.");
   }
 
-  await navigator.serviceWorker.register(stockSW);
+  await navigator.serviceWorker.register(stockSW, { scope: "/" });
+}
+
+export async function ensureProxyReady() {
+  await Promise.all([registerSW(), initializeScramjet()]);
 }
 
 if (window.self === window.top) {
@@ -159,10 +171,12 @@ export function getWisp() {
  * @returns {Promise<string>}
  */
 export async function proxySJ(input) {
+  await ensureProxyReady();
   const url = makeURL(input);
   return scramjet.encodeUrl(url);
 }
 export async function proxyUV(input) {
+  await registerSW();
   const url = makeURL(input);
   return __uv$config.prefix + __uv$config.encodeUrl(url);
 }
