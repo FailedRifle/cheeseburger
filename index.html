@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CheddarOS</title>
+    <link rel="manifest" href="loader/manifest.json">
     <link rel="icon" href="loader/favicon.png" type="image/png">
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300&display=swap" rel="stylesheet">
     <style>
@@ -74,11 +75,6 @@
             });
 
             btn.addEventListener('click', async () => {
-                const link = document.createElement('link');
-                link.rel = 'manifest';
-                link.href = 'loader/manifest.json';
-                document.head.appendChild(link);
-
                 if ('serviceWorker' in navigator) {
                     await navigator.serviceWorker.register('loader/service-worker.js', { scope: './' });
                 }
@@ -87,13 +83,6 @@
                     deferredPrompt.prompt();
                     await deferredPrompt.userChoice;
                     deferredPrompt = null;
-                } else {
-                    setTimeout(() => {
-                        if (deferredPrompt) {
-                            deferredPrompt.prompt();
-                            deferredPrompt = null;
-                        }
-                    }, 1000);
                 }
             });
         } else {
