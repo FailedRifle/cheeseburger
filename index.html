@@ -75,10 +75,6 @@
             });
 
             btn.addEventListener('click', async () => {
-                if ('serviceWorker' in navigator) {
-                    await navigator.serviceWorker.register('loader/service-worker.js', { scope: './' });
-                }
-
                 if (deferredPrompt) {
                     deferredPrompt.prompt();
                     await deferredPrompt.userChoice;
@@ -88,6 +84,12 @@
         } else {
             window.addEventListener('beforeinstallprompt', (e) => {
                 e.preventDefault();
+            });
+        }
+
+        if ('serviceWorker' in navigator && installable) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('loader/service-worker.js', { scope: './' }).catch(() => {});
             });
         }
     </script>
