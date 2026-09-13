@@ -5,6 +5,7 @@ import {
   makeURL,
   proxySJ,
   proxyUV,
+  getProxyType,
 } from "../../lithium.mjs";
 const response = await fetch("https://api.ipify.org?format=json");
 const data = await response.json();
@@ -27,7 +28,7 @@ function launchApp() {
   } 
   else { // custom app 
     let appURLx = appURL;
-    openApp(appURLx, tempProxy);
+    openApp(appURLx, tempProxy || getProxyType());
     frame.style.zIndex = "1";
   }
   const iframe = document.getElementById("frame");

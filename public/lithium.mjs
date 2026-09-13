@@ -134,8 +134,17 @@ async function updateBareMux() {
  */
 export async function setTransport(transport) {
   console.log(`lethal.js: Setting transport to ${transport}`);
+  localStorage.setItem("transport", transport);
+  localStorage.setItem("transportType", transport);
   transportURL = transportOptions[transport] || transport;
   await updateBareMux();
+}
+
+export function getProxyType() {
+  const selected = localStorage.getItem("proxyType");
+  if (selected === "UV" || selected === "SJ" || selected === "Auto") return selected;
+  if (localStorage.getItem("proxy-backend") === "scramjet") return "SJ";
+  return "UV";
 }
 
 /**

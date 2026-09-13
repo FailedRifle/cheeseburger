@@ -69,6 +69,7 @@ changeEngine.addEventListener("click", (e) => {
 setUV.addEventListener("click", () => {
   console.log("UV selected");
   localStorage.setItem("proxyType", "UV");
+  localStorage.setItem("proxy-backend", "ultraviolet");
   proxyMenu.classList.remove("show");
   moreMenu.classList.remove("show");
   overlay.classList.remove("show");
@@ -86,6 +87,7 @@ setAuto.addEventListener("click", () => {
 setSJ.addEventListener("click", () => {
   console.log("SJ selected");
   localStorage.setItem("proxyType", "SJ");
+  localStorage.setItem("proxy-backend", "scramjet");
   proxyMenu.classList.remove("show");
   moreMenu.classList.remove("show");
   overlay.classList.remove("show");

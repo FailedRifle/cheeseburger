@@ -5,6 +5,7 @@ import {
   proxySJ,
   proxyUV,
   registerSW,
+  getProxyType,
 } from "/lithium.mjs";
 import("/glass/glassJS.config.js");
 console.log("search.js loaded");
@@ -14,12 +15,7 @@ let activeWisp;
 const bar = document.getElementById("bar");
 let progress = 0;
 
-if (localStorage.getItem("transportType") == null) {
-  localStorage.setItem("transportType", "libcurl");
-  transportx = "libcurl";
-} else {
-  transportx = localStorage.getItem("transportType");
-}
+transportx = localStorage.getItem("transport") || localStorage.getItem("transportType") || "libcurl";
 setTransport(transportx);
 console.log(transportx);
 
@@ -125,7 +121,7 @@ document.addEventListener("keyup", async (e) => {
       loadingNotice.style.animation = "noticeHide 0.4s forwards";
     });
     let url = input.value;
-    let proxyType = localStorage.getItem("proxyType"); //Checks if link includes geforce
+    let proxyType = getProxyType(); // UV is the default, with Cheddar's selector still supported.
     if (url.includes("nvidia") || url.includes("geforce")) {
       let geforceNotice = document.createElement("div");
       geforceNotice.className = "notice";

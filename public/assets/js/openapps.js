@@ -4,6 +4,7 @@ import {
   makeURL,
   proxySJ,
   proxyUV,
+  getProxyType,
 } from "../../lithium.mjs";
 console.log("openapps.js loaded");
 export async function openurl(url, proxytype) {
@@ -12,7 +13,7 @@ export async function openurl(url, proxytype) {
   loadingShow();
   input.value = url;
   let URL;
-  proxytype = proxytype || localStorage.getItem("proxyType") || "SJ";
+  proxytype = proxytype || getProxyType();
   if (proxytype === "SJ") {
     URL = await proxySJ(makeURL(input.value));
     console.log("set to SJ");
@@ -37,7 +38,7 @@ export async function openurl(url, proxytype) {
 export async function openApp(url, proxytype) {
   let iframe = document.getElementById("frame");
   let URL;
-  proxytype = proxytype || localStorage.getItem("proxyType") || "SJ";
+  proxytype = proxytype || getProxyType();
   if (proxytype === "SJ") {
     URL = await proxySJ(makeURL(url));
     console.log("set to SJ");
