@@ -1,7 +1,9 @@
 import { fastify } from "../src/index.js";
 
-// Vercel's Node runtime accepts a native HTTP server for WebSocket-capable
-// functions. The server is initialized once per warm function instance.
-await fastify.ready();
+let ready;
 
-export default fastify.server;
+export default async function handler(request, response) {
+  ready ??= fastify.ready();
+  await ready;
+  fastify.server.emit("request", request, response);
+}
