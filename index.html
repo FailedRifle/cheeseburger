@@ -16,27 +16,25 @@
         const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
         if (isPWA) {
-            // Passing width and height forces browsers to open a new separate window instead of a tab
-            try {
-                const newWindow = window.open('about:blank', '_blank', 'width=600,height=400,toolbar=no,menubar=no,scrollbars=yes,resizable=yes');
-                if (newWindow) {
-                    newWindow.document.write(`
-                        <html>
-                        <head><title>about:blank</title></head>
-                        <body style="font-family: monospace; padding: 20px;">
-                            PWA
-                        </body>
-                        </html>
-                    `);
-                    newWindow.document.close();
-                } else {
-                    document.body.innerHTML = "PWA (Popup blocked - please allow popups)";
-                    document.title = "about:blank";
-                }
-            } catch (e) {
-                document.body.innerHTML = "PWA";
-                document.title = "about:blank";
-            }
+            // Fetch core/browser.html and write its content into the new window
+            fetch('core/browser.html')
+                .then(response => {
+                    if (!response.ok) throw new Error('Failed to load core/browser.html');
+                    return response.text();
+                })
+                .then(htmlContent => {
+                    const newWindow = window.open('about:blank', '_blank', 'width=800,height=600,toolbar=no,menubar=no,scrollbars=yes,resizable=yes');
+                    if (newWindow) {
+                        newWindow.document.write(htmlContent);
+                        newWindow.document.close();
+                    } else {
+                        document.body.innerHTML = "Popup blocked - please allow popups for this site.";
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    document.body.innerHTML = "Error loading core/browser.html";
+                });
         } else {
             document.getElementById('status').textContent = "You are currently on the browser.";
             document.title = "Browser";
