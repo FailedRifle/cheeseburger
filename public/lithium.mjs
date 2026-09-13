@@ -1,7 +1,9 @@
 //////////////////////////////
 ///          Init          ///
 //////////////////////////////
-import { BareMuxConnection } from "/baremux/index.js";
+// Use the browser bundle here; the server package exposes bare Node imports
+// that browsers cannot resolve (which would stop every proxy page module).
+import { BareMuxConnection } from "https://unpkg.com/@mercuryworkshop/bare-mux@2.1.7/dist/index.mjs";
 //////////////////////////////
 ///         Options        ///
 //////////////////////////////
