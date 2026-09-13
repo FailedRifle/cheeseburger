@@ -4,9 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CheddarOS</title>
-    
     <link rel="manifest" href="loader/manifest.json">
     <link rel="icon" href="loader/favicon.png" type="image/png">
+    <style>
+        body {
+            margin: 0;
+            background-color: #000000;
+            color: #888888;
+            font-family: sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-size: 14px;
+            font-weight: 300;
+        }
+    </style>
 </head>
 <body>
     <div id="status"></div>
@@ -16,7 +29,7 @@
         if (isPWA) {
             fetch('core/browser.html')
                 .then(response => {
-                    if (!response.ok) throw new Error('Failed to load core/browser.html');
+                    if (!response.ok) throw new Error();
                     return response.text();
                 })
                 .then(htmlContent => {
@@ -24,23 +37,21 @@
                     if (newWindow) {
                         newWindow.document.write(htmlContent);
                         newWindow.document.close();
+                        window.close();
                     } else {
-                        document.body.innerHTML = "Popup blocked - please allow popups for this site.";
+                        document.body.textContent = "Popup blocked - please allow popups for this site.";
                     }
                 })
-                .catch(err => {
-                    console.error(err);
-                    document.body.innerHTML = "Error loading core/browser.html";
+                .catch(() => {
+                    document.body.textContent = "Error loading core/browser.html";
                 });
         } else {
-            document.getElementById('status').textContent = "You are currently on the browser.";
-            document.title = "Browser";
+            document.getElementById('status').textContent = "Please install the app to continue using CheddarOS";
         }
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('loader/service-worker.js', { scope: './' })
-                    .catch(err => console.log('Service Worker registration failed:', err));
+                navigator.serviceWorker.register('loader/service-worker.js', { scope: './' }).catch(() => {});
             });
         }
     </script>
