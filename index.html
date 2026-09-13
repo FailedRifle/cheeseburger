@@ -3,44 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PWA vs Browser Detector</title>
+    <title>CheddarOS</title>
     
-    <!-- Link your manifest so the browser recognizes it as a PWA -->
-    <link rel="manifest" href="manifest.json">
+    <!-- Points to the manifest inside your loader folder -->
+    <link rel="manifest" href="loader/manifest.json">
+    <link rel="icon" href="loader/favicon.png" type="image/png">
 
     <style>
         body {
             font-family: Arial, sans-serif;
             text-align: center;
             margin-top: 50px;
+            background-color: #131313;
+            color: #ffffff;
         }
         .message {
             font-size: 24px;
             font-weight: bold;
-            padding: 20px;
+            padding: 20px 30px;
             border-radius: 8px;
             display: inline-block;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
-        /* Default style for Browser */
+        /* Style for Browser tab */
         .browser-msg {
-            color: #d9534f;
-            background-color: #f2dede;
+            color: #ff6b6b;
+            background-color: #2c1a1a;
+            border: 1px solid #ff6b6b;
         }
         /* Style when running as PWA */
         .pwa-msg {
-            color: #5cb85c;
-            background-color: #dff0d8;
+            color: #51cf66;
+            background-color: #1a2c1d;
+            border: 1px solid #51cf66;
         }
     </style>
 </head>
 <body>
 
     <div id="status" class="message browser-msg">
-        You are currently on the Browser!
+        Checking environment...
     </div>
 
     <script>
-        // Method 1: Check using matchMedia (Standard way for standalone mode)
+        // Check if running as a standalone PWA (or iOS standalone)
         const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
         const statusDiv = document.getElementById('status');
@@ -53,11 +59,11 @@
             statusDiv.className = "message browser-msg";
         }
 
-        // Optional: Register your service worker so the PWA install prompt / offline features work smoothly
+        // Register the service worker from the loader folder with root scope allowance
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('service-worker.js')
-                    .then(reg => console.log('Service Worker registered!', reg))
+                navigator.serviceWorker.register('loader/service-worker.js', { scope: './' })
+                    .then(reg => console.log('Service Worker registered successfully!', reg))
                     .catch(err => console.log('Service Worker registration failed:', err));
             });
         }
