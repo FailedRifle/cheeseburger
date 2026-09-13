@@ -326,7 +326,6 @@
     <div class="viewport" id="viewport"></div>
   </div>
 
-  <!-- Template markup for a "browser" pane (cheddar:// pages) -->
   <template id="browser-pane-template">
     <div class="view active" id="view-home">
       <div class="homepage">
@@ -371,15 +370,10 @@
   </template>
 
   <script>
-    // ---- Announcement banner ----
-    // Set this to show a "[NOTICE] ..." banner at the top of the browser.
-    // Leave as "" to hide the banner entirely.
+    
     const ANNOUNCEMENT_TEXT = "";
-
-    // ---- OS version ----
     const OS_VERSION = "v1.0.0";
 
-    // ---- Changelog data ----
     const changelogData = [
       { ver:"v1.0.0", date:"9/08/2026", items:["CheddarOS officially released","Added 23 new games","Made the game icons appear next to the game in the sidebar","Popular games are now based of statistic from users","You can now view when a user is online, offline, or ingame","Added quick links so you can click a user inside the credits to go to their profile","Moved the info inside the credits","Added some account settings inside the Settings tab","Started core logic for CheddarOS Browser","Changed the style so its more simple looking","Made CheddarGPT Private access","Removed the support tab","Added a quick report button inside the all game pages for quick and easy bug reports","Added an account system for easier data saving when changing links and stat checking","Removed the Info tab and merged it into Credits","Added a Terms of Service","Added an All Accounts directory to the Users tab"] },
       { ver:"vBETA-1.3.3", date:"5/22/2026", items:["Added Plants VS. Zombies"] },
@@ -441,9 +435,6 @@
       `).join("");
     }
 
-    // ---- Tab model ----
-    // A tab is either kind: "browser" (renders cheddar:// pages, has its own nav history)
-    // or kind: "app" (renders an iframe pointing at a page in this repo, e.g. games.html)
     let nextTabId = 1;
     let tabs = [];
     let activeTabId = null;
@@ -468,11 +459,10 @@
       return tabs.find(t => t.id === activeTabId);
     }
 
-    // ---- Rendering ----
     const tabStrip = document.querySelector("#tab-strip");
     const viewport = document.querySelector("#viewport");
     const addressInput = document.querySelector("#address-input");
-    const paneEls = {}; // tabId -> pane DOM element
+    const paneEls = {};
 
     function renderTabStrip() {
       tabStrip.innerHTML = "";
@@ -597,7 +587,6 @@
       switchToTab(tab.id);
     }
 
-    // ---- Browser-tab internal navigation (cheddar:// pages) ----
     function navigateBrowserTab(tab, url, addToHistory = true) {
       url = url.trim();
       const pane = paneEls[tab.id];
@@ -655,7 +644,6 @@
       fwdBtn.classList.toggle("disabled", tab.historyIndex >= tab.history.length - 1);
     }
 
-    // ---- Toolbar controls ----
     document.querySelector("#back-btn").addEventListener("click", () => {
       const tab = currentTab();
       if (!tab || tab.kind !== "browser") return;
@@ -695,7 +683,6 @@
       if (tab && tab.kind === "browser") navigateBrowserTab(tab, addressInput.value);
     });
 
-    // ---- Init ----
     renderAnnouncement();
     const initialTab = makeBrowserTab();
     tabs.push(initialTab);
