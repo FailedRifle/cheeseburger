@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 40px 20px; background-color: #121212; color: #e0e0e0; display: flex; justify-content: center; }
+    .container { max-width: 800px; width: 100%; }
+    h1 { font-size: 24px; margin-bottom: 24px; color: #ffffff; border-bottom: 2px solid #333; padding-bottom: 10px; }
+    textarea { width: 100%; height: 200px; box-sizing: border-box; font-family: monospace; font-size: 11px; border: 1px solid #444; border-radius: 4px; padding: 10px; background-color: #1e1e1e; color: #d4d4d4; margin-top: 8px; }
+    .row { margin-top: 20px; }
+    .input-group { display: flex; gap: 8px; margin-top: 8px; }
+    input[type="text"] { flex: 1; padding: 8px; border: 1px solid #444; border-radius: 4px; background-color: #1e1e1e; color: #ffffff; }
+    button { padding: 8px 16px; cursor: pointer; background-color: #333; border: 1px solid #444; border-radius: 4px; color: #fff; }
+    button:hover { background-color: #444; }
+    #status { margin-top: 15px; font-weight: 500; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>cheddarOS google form cracker</h1>
+
+    <div class="row">
+      <label>Google Form Link:</label>
+      <div class="input-group">
+        <input type="text" id="form_link_input" placeholder="https://docs.google.com/forms/d/e/...">
+        <button id="fetch-btn">fetch source</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <label>Page Source:</label>
+      <textarea id="form_source" placeholder="Source will appear here automatically..."></textarea>
+    </div>
+
+    <div class="row">
+      <button id="unlock-btn" style="background: #ffffff; color: #000; font-weight: bold;">UNLOCK FORM</button>
+    </div>
+
+    <p id="status"></p>
+
+    <form target="_blank" method="POST" id="greatest_form">
+      <input type="hidden" name="token" id="token">
+      <input type="hidden" name="tz_offset" value="120">
+      <input type="submit" style="display: none;" id="sub">
+    </form>
+  </div>
+
+  <script>
+    const WORKER_URL = 'https://source-finder.fauilting.workers.dev/';
+
+    function parseSource(source) {
+      const match = source.match(/_docs_flag_initialData=(?<data>{[\s\S]*?});<\/script>/);
+      if (!match) throw new Error("Could not find required form data.");
+      const info = JSON.parse(match.groups.data);
+      if (!info.info_params?.token) throw new Error("Could not extract token.");
+      
+      const url = "https://docs.google.com" + info["docs-crp"];
+      return { token: info.info_params.token, url: url };
+    }
+
+    document.querySelector("#fetch-btn").addEventListener("click", async () => {
+      const status = document.querySelector("#status");
+      const link = document.querySelector("#form_link_input").value.trim();
+      
+      status.textContent = "Fetching...";
+      try {
+        const response = await fetch(`${WORKER_URL}?url=${encodeURIComponent(link)}`);
+        const text = await response.text();
+        document.querySelector("#form_source").value = text;
+        status.textContent = "Source captured!";
+      } catch (e) {
+        status.textContent = "Fetch failed: " + e.message;
+      }
+    });
+
+    document.querySelector("#unlock-btn").addEventListener("click", () => {
+      const source = document.querySelector("#form_source").value;
+      const status = document.querySelector("#status");
+      try {
+        const { token, url } = parseSource(source);
+        document.querySelector("#token").value = token;
+        document.querySelector("#greatest_form").action = url;
+        document.querySelector("#sub").click();
+        status.textContent = "Success! Opening in new tab.";
+      } catch (e) {
+        status.textContent = "Error: " + e.message;
+      }
+    });
+  </script>
+</body>
+</html>
