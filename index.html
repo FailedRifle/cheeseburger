@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CheddarOS</title>
-    <link rel="manifest" href="loader/manifest.json">
     <link rel="icon" href="loader/favicon.png" type="image/png">
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300&display=swap" rel="stylesheet">
     <style>
@@ -14,37 +13,19 @@
             color: #555555;
             font-family: 'Roboto Mono', monospace;
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
             height: 100vh;
             font-size: 14px;
             font-weight: 300;
-            gap: 15px;
-        }
-        #install-btn {
-            background: transparent;
-            border: 1px solid #555555;
-            color: #888888;
-            font-family: 'Roboto Mono', monospace;
-            padding: 8px 16px;
-            cursor: pointer;
-            border-radius: 4px;
-            display: none;
-        }
-        #install-btn:hover {
-            border-color: #888888;
-            color: #ffffff;
         }
     </style>
 </head>
 <body>
     <div id="status">Please install the app to continue using CheddarOS</div>
-    <button id="install-btn">Install CheddarOS</button>
     <script>
-        const installable = true;
+        const installable = false;
         const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-        let deferredPrompt;
 
         if (isPWA && installable) {
             fetch('core/browser.html')
@@ -65,25 +46,16 @@
                 .catch(() => {
                     document.body.textContent = "Error loading core/browser.html";
                 });
-        } else if (installable) {
+        } else if (!installable) {
             window.addEventListener('beforeinstallprompt', (e) => {
                 e.preventDefault();
-                deferredPrompt = e;
-                document.getElementById('install-btn').style.display = 'block';
             });
-
-            document.getElementById('install-btn').addEventListener('click', async () => {
-                if (deferredPrompt) {
-                    deferredPrompt.prompt();
-                    const { outcome } = await deferredPrompt.userChoice;
-                    if (outcome === 'accepted') {
-                        if ('serviceWorker' in navigator) {
-                            await navigator.serviceWorker.register('loader/service-worker.js', { scope: './' });
-                        }
-                    }
-                    deferredPrompt = null;
-                }
-            });
+        } else {
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('loader/service-worker.js', { scope: './' }).catch(() => {});
+                });
+            }
         }
     </script>
 </body>
