@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CheddarOS</title>
-    <link rel="manifest" href="loader/manifest.json">
+    <link id="manifest-link" rel="manifest" href="">
     <link rel="icon" href="loader/favicon.png" type="image/png">
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300&display=swap" rel="stylesheet">
     <style>
@@ -45,6 +45,10 @@
         const installable = false;
         const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
         let deferredPrompt;
+
+        if (installable) {
+            document.getElementById('manifest-link').href = 'loader/manifest.json';
+        }
 
         if (isPWA && installable) {
             fetch('core/browser.html')
