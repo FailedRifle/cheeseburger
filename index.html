@@ -16,11 +16,11 @@
         const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
         if (isPWA) {
-            // Attempt to open a new blank tab and write the message into it
+            // Passing width and height forces browsers to open a new separate window instead of a tab
             try {
-                const newTab = window.open('about:blank', '_blank');
-                if (newTab) {
-                    newTab.document.write(`
+                const newWindow = window.open('about:blank', '_blank', 'width=600,height=400,toolbar=no,menubar=no,scrollbars=yes,resizable=yes');
+                if (newWindow) {
+                    newWindow.document.write(`
                         <html>
                         <head><title>about:blank</title></head>
                         <body style="font-family: monospace; padding: 20px;">
@@ -28,10 +28,9 @@
                         </body>
                         </html>
                     `);
-                    newTab.document.close();
+                    newWindow.document.close();
                 } else {
-                    // Fallback if browser blocks the automatic popup
-                    document.body.innerHTML = "PWA (Enable popups to open in a new tab)";
+                    document.body.innerHTML = "PWA (Popup blocked - please allow popups)";
                     document.title = "about:blank";
                 }
             } catch (e) {
