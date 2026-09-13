@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CheddarOS</title>
   <style>
     * { box-sizing: border-box; }
     html, body {
@@ -29,6 +28,7 @@
       gap: 4px;
       background: #0e0e0e;
       padding: 8px 8px 0;
+      overflow-x: auto;
     }
     .tab {
       display: flex;
@@ -42,12 +42,16 @@
       font-size: 13px;
       color: #b0b0b0;
       max-width: 180px;
+      cursor: pointer;
+      flex-shrink: 0;
     }
     .tab.active { background: #1a1a1a; color: #fff; }
     .tab .favicon { width: 10px; height: 10px; border-radius: 2px; background: #555; flex-shrink: 0; }
     .tab .title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .tab .close { color: #666; font-size: 14px; line-height: 1; }
-    .tab-new { padding: 8px 10px; color: #666; font-size: 16px; line-height: 1; }
+    .tab .close { color: #666; font-size: 14px; line-height: 1; padding: 2px; border-radius: 3px; }
+    .tab .close:hover { color: #ccc; background: #333; }
+    .tab-new { padding: 8px 10px; color: #666; font-size: 16px; line-height: 1; cursor: pointer; flex-shrink: 0; }
+    .tab-new:hover { color: #ccc; }
 
     /* Toolbar */
     .toolbar {
@@ -110,90 +114,6 @@
     }
     .toolbar-icon:hover { color: #ccc; background: #232323; }
 
-    .profile-avatar {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: #262626;
-      border: 1px solid #3a3a3a;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      flex-shrink: 0;
-      cursor: pointer;
-    }
-    .profile-avatar:hover { background: #2e2e2e; }
-
-    /* Account panel - drops down right under the toolbar, Google-style */
-    .account-panel {
-      position: absolute;
-      top: 100%;
-      right: 14px;
-      margin-top: 6px;
-      background: #1e1e1e;
-      border: 1px solid #333;
-      border-radius: 12px;
-      width: 240px;
-      padding: 16px;
-      display: none;
-      z-index: 20;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.45);
-    }
-    .account-panel.open { display: block; }
-    .account-panel .panel-user {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-    .account-panel .panel-avatar {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: #2a2a2a;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-      flex-shrink: 0;
-    }
-    .account-panel .panel-name { font-size: 13px; color: #eee; }
-    .account-panel .panel-sub { font-size: 11px; color: #777; margin-top: 2px; }
-    .account-panel .panel-note {
-      font-size: 12px;
-      color: #888;
-      margin-bottom: 14px;
-      line-height: 1.4;
-    }
-    .panel-divider {
-      border-top: 1px solid #2a2a2a;
-      margin: 10px 0;
-    }
-    .panel-action {
-      display: block;
-      width: 100%;
-      text-align: center;
-      padding: 9px 0;
-      border-radius: 8px;
-      font-size: 13px;
-      cursor: pointer;
-      margin-top: 8px;
-    }
-    .panel-action.primary { background: #fff; color: #000; font-weight: 600; }
-    .panel-action.primary:hover { background: #ddd; }
-    .panel-action.secondary { background: transparent; color: #ccc; border: 1px solid #3a3a3a; }
-    .panel-action.secondary:hover { background: #262626; }
-    .panel-link {
-      display: block;
-      text-align: center;
-      font-size: 12px;
-      color: #888;
-      margin-top: 10px;
-      cursor: pointer;
-    }
-    .panel-link:hover { color: #ccc; }
-
     .bookmarks-bar {
       display: flex;
       gap: 18px;
@@ -209,7 +129,17 @@
       flex: 1;
       background: #0f0f0f;
       overflow-y: auto;
+      position: relative;
     }
+    .pane { display: none; height: 100%; width: 100%; }
+    .pane.active { display: flex; }
+    .pane iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #0f0f0f;
+    }
+
     .view { display: none; height: 100%; }
     .view.active { display: flex; }
 
@@ -260,91 +190,15 @@
     .app .app-label { font-size: 11px; color: #999; text-align: center; }
 
     /* Generic page */
-    #view-settings, #view-account { align-items: flex-start; justify-content: flex-start; }
-    #view-users, #view-signin, #view-register { align-items: center; justify-content: flex-start; }
+    #view-settings { align-items: flex-start; justify-content: flex-start; }
     .page { width: 100%; padding: 40px 60px; }
     .page h2 { font-size: 20px; color: #fff; margin: 0 0 24px; font-weight: 600; }
     .empty-note { color: #555; font-size: 14px; }
-
-    /* Users view - Google account-chooser style */
-    .users-page { display: flex; flex-direction: column; align-items: center; gap: 24px; padding: 60px 20px; width: 100%; }
-    .users-page h2 { font-size: 22px; color: #fff; font-weight: 500; margin: 0; }
-    .users-search {
-      display: flex; align-items: center; gap: 10px;
-      padding: 9px 16px; background: #1e1e1e; border: 1px solid #333;
-      border-radius: 24px; width: 320px;
-    }
-    .users-search input { flex: 1; background: transparent; border: none; outline: none; color: #eee; font-size: 13px; font-family: inherit; }
-    .users-search .search-icon { color: #666; font-size: 13px; }
-    .users-list-card { background: #161616; border: 1px solid #262626; border-radius: 16px; width: 360px; max-width: 90vw; overflow: hidden; }
-    .user-row { display: flex; align-items: center; gap: 16px; padding: 16px 20px; cursor: pointer; border-bottom: 1px solid #212121; }
-    .user-row:last-child { border-bottom: none; }
-    .user-row:hover { background: #1c1c1c; }
-    .user-avatar { width: 44px; height: 44px; border-radius: 50%; background: #262626; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
-    .user-info .user-name { font-size: 14px; color: #eee; }
-    .user-info .user-id { font-size: 12px; color: #666; margin-top: 2px; }
-
-    /* User / account page */
-    .account-page { width: 100%; display: flex; flex-direction: column; align-items: center; padding: 60px 20px; gap: 6px; }
-    .account-avatar-lg { width: 88px; height: 88px; border-radius: 50%; background: #262626; display: flex; align-items: center; justify-content: center; font-size: 36px; margin-bottom: 16px; }
-    .account-name { font-size: 20px; color: #fff; font-weight: 500; }
-    .account-id { font-size: 13px; color: #888; margin-top: 4px; }
-    .account-divider { width: 320px; max-width: 80vw; border-top: 1px solid #262626; margin: 20px 0; }
-    .account-created { font-size: 12px; color: #666; }
-
-    /* Auth pages */
-    .auth-page { width: 100%; display: flex; justify-content: center; padding: 70px 20px; }
-    .auth-card {
-      width: 320px;
-      max-width: 90vw;
-      background: #161616;
-      border: 1px solid #262626;
-      border-radius: 16px;
-      padding: 32px 28px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .auth-card h2 { margin: 0 0 8px; font-size: 20px; color: #fff; font-weight: 600; text-align: center; }
-    .auth-card input {
-      padding: 11px 14px;
-      background: #1e1e1e;
-      border: 1px solid #333;
-      border-radius: 8px;
-      color: #eee;
-      font-size: 13px;
-      font-family: inherit;
-      outline: none;
-    }
-    .auth-card input:focus { border-color: #555; }
-    .auth-error { color: #e07b7b; font-size: 12px; min-height: 16px; }
-    .auth-submit {
-      margin-top: 6px;
-      padding: 10px 0;
-      background: #fff;
-      color: #000;
-      font-weight: 600;
-      font-size: 13px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    .auth-submit:hover { background: #ddd; }
-    .auth-alt { text-align: center; font-size: 12px; color: #888; margin-top: 8px; }
-    .auth-link { color: #ccc; cursor: pointer; text-decoration: underline; }
-    .auth-link:hover { color: #fff; }
   </style>
 </head>
 <body>
   <div class="browser">
-    <div class="tab-strip">
-      <div class="tab active">
-        <span class="favicon"></span>
-        <span class="title" id="tab-title">New Tab</span>
-        <span class="close">×</span>
-      </div>
-      <div class="tab-new">+</div>
-    </div>
+    <div class="tab-strip" id="tab-strip"></div>
 
     <div class="toolbar">
       <div class="nav-btn" id="back-btn">‹</div>
@@ -357,334 +211,279 @@
       </div>
       <div class="toolbar-icon">☆</div>
       <div class="toolbar-icon" id="settings-btn">⚙️</div>
-      <div class="profile-avatar" id="profile-btn">👤</div>
-
-      <div class="account-panel" id="account-panel"></div>
     </div>
 
     <div class="bookmarks-bar">
-      <span>Bookmark 1</span>
-      <span>Bookmark 2</span>
-      <span>Bookmark 3</span>
+      <span>CHEDDAR</span>
+      <span>ON</span>
+      <span>TOP</span>
     </div>
 
-    <div class="viewport">
-
-      <!-- cheddar://home -->
-      <div class="view active" id="view-home">
-        <div class="homepage">
-          <div class="logo">CheddarOS</div>
-          <div class="search-box">
-            <span class="search-icon">🔍</span>
-            <span>Search CheddarOS or type a URL</span>
-          </div>
-          <div class="apps-section">
-            <div class="apps-label">Apps</div>
-            <div class="apps-row">
-              <div class="app" data-nav=""><div class="app-icon">🎮</div><div class="app-label">Game Hub</div></div>
-              <div class="app" data-nav=""><div class="app-icon">🛒</div><div class="app-label">App Store</div></div>
-              <div class="app" data-nav=""><div class="app-icon">💬</div><div class="app-label">Chat</div></div>
-              <div class="app" data-nav=""><div class="app-icon">🎵</div><div class="app-label">Media</div></div>
-              <div class="app" data-nav=""><div class="app-icon">📁</div><div class="app-label">Files</div></div>
-              <div class="app" data-nav="cheddar://users"><div class="app-icon">👥</div><div class="app-label">Users</div></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- cheddar://settings -->
-      <div class="view" id="view-settings">
-        <div class="page">
-          <h2>Settings</h2>
-          <div class="empty-note">Nothing here yet.</div>
-        </div>
-      </div>
-
-      <!-- cheddar://users -->
-      <div class="view" id="view-users">
-        <div class="users-page">
-          <h2>Choose an account</h2>
-          <div class="users-search">
-            <span class="search-icon">🔍</span>
-            <input type="text" id="user-search-input" placeholder="Search users">
-          </div>
-          <div class="users-list-card" id="users-list"></div>
-        </div>
-      </div>
-
-      <!-- cheddar://user-* -->
-      <div class="view" id="view-account">
-        <div class="account-page" id="account-content"></div>
-      </div>
-
-      <!-- cheddar://sign-in -->
-      <div class="view" id="view-signin">
-        <div class="auth-page">
-          <div class="auth-card">
-            <h2>Sign in</h2>
-            <input type="text" id="signin-username" placeholder="Username">
-            <input type="password" id="signin-password" placeholder="Password">
-            <div class="auth-error" id="signin-error"></div>
-            <button class="auth-submit" id="signin-submit">Sign in</button>
-            <div class="auth-alt">No account? <span class="auth-link" data-nav="cheddar://register">Register</span></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- cheddar://register -->
-      <div class="view" id="view-register">
-        <div class="auth-page">
-          <div class="auth-card">
-            <h2>Create account</h2>
-            <input type="text" id="register-username" placeholder="Username">
-            <input type="password" id="register-password" placeholder="Password">
-            <input type="password" id="register-confirm" placeholder="Confirm password">
-            <div class="auth-error" id="register-error"></div>
-            <button class="auth-submit" id="register-submit">Create account</button>
-            <div class="auth-alt">Already have an account? <span class="auth-link" data-nav="cheddar://sign-in">Sign in</span></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- unresolved route -->
-      <div class="view" id="view-notfound">
-        <div class="page">
-          <h2>This page can't be reached</h2>
-          <div class="empty-note" id="notfound-detail"></div>
-        </div>
-      </div>
-
-    </div>
+    <div class="viewport" id="viewport"></div>
   </div>
 
+  <!-- Template markup for a "browser" pane (cheddar:// pages) -->
+  <template id="browser-pane-template">
+    <div class="view active" id="view-home">
+      <div class="homepage">
+        <div class="logo">CheddarOS</div>
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <span>Search on CheddarOS</span>
+        </div>
+        <div class="apps-section">
+          <div class="apps-label">Apps</div>
+          <div class="apps-row">
+            <div class="app" data-app="games"><div class="app-icon">🎮</div><div class="app-label">cheddargames</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="view" id="view-settings">
+      <div class="page">
+        <h2>Settings</h2>
+        <div class="empty-note">Nothing here yet.</div>
+      </div>
+    </div>
+
+    <div class="view" id="view-notfound">
+      <div class="page">
+        <h2>This page can't be reached</h2>
+        <div class="empty-note" data-notfound-detail></div>
+      </div>
+    </div>
+  </template>
+
   <script>
-    // ---- In-memory mock data (Vercel DB / real auth wired up later) ----
-    const users = [
-      { id: 999, username: "john_doe", created: "March 3, 2021" }
-    ];
-    let nextId = 1000;
-    let currentUser = null; // nobody is signed in by default
+    // ---- Tab model ----
+    // A tab is either kind: "browser" (renders cheddar:// pages, has its own nav history)
+    // or kind: "app" (renders an iframe pointing at a page in this repo, e.g. games.html)
+    let nextTabId = 1;
+    let tabs = [];
+    let activeTabId = null;
 
+    function makeBrowserTab() {
+      const id = nextTabId++;
+      return {
+        id,
+        kind: "browser",
+        title: "New Tab",
+        history: ["cheddar://home"],
+        historyIndex: 0,
+      };
+    }
+
+    function makeAppTab(title, src, addr) {
+      const id = nextTabId++;
+      return { id, kind: "app", title, src, addr };
+    }
+
+    function currentTab() {
+      return tabs.find(t => t.id === activeTabId);
+    }
+
+    // ---- Rendering ----
+    const tabStrip = document.querySelector("#tab-strip");
+    const viewport = document.querySelector("#viewport");
     const addressInput = document.querySelector("#address-input");
-    const tabTitle = document.querySelector("#tab-title");
-    const views = document.querySelectorAll(".view");
-    const profileBtn = document.querySelector("#profile-btn");
-    const accountPanel = document.querySelector("#account-panel");
+    const paneEls = {}; // tabId -> pane DOM element
 
-    let history = ["cheddar://home"];
-    let historyIndex = 0;
-
-    function showView(id) {
-      views.forEach(v => v.classList.remove("active"));
-      document.querySelector("#" + id).classList.add("active");
-    }
-
-    function formatToday() {
-      const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-      const d = new Date();
-      return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
-    }
-
-    function renderUsersList(filter = "") {
-      const list = document.querySelector("#users-list");
-      list.innerHTML = "";
-      const filtered = users.filter(u =>
-        u.username.toLowerCase().includes(filter.toLowerCase()) ||
-        String(u.id).includes(filter)
-      );
-      if (filtered.length === 0) {
-        list.innerHTML = '<div class="empty-note" style="padding:16px 20px;">No users found.</div>';
-        return;
-      }
-      filtered.forEach(u => {
-        const row = document.createElement("div");
-        row.className = "user-row";
-        row.dataset.nav = `cheddar://user-${u.id}`;
-        row.innerHTML = `
-          <div class="user-avatar">🙂</div>
-          <div class="user-info">
-            <div class="user-name">${u.username}</div>
-            <div class="user-id">ID: ${u.id}</div>
-          </div>
+    function renderTabStrip() {
+      tabStrip.innerHTML = "";
+      tabs.forEach(tab => {
+        const el = document.createElement("div");
+        el.className = "tab" + (tab.id === activeTabId ? " active" : "");
+        el.innerHTML = `
+          <span class="favicon"></span>
+          <span class="title">${tab.title}</span>
+          <span class="close">×</span>
         `;
-        row.addEventListener("click", () => navigate(row.dataset.nav));
-        list.appendChild(row);
+        el.addEventListener("click", (e) => {
+          if (e.target.classList.contains("close")) return;
+          switchToTab(tab.id);
+        });
+        el.querySelector(".close").addEventListener("click", (e) => {
+          e.stopPropagation();
+          closeTab(tab.id);
+        });
+        tabStrip.appendChild(el);
       });
+      const newBtn = document.createElement("div");
+      newBtn.className = "tab-new";
+      newBtn.textContent = "+";
+      newBtn.addEventListener("click", () => {
+        const tab = makeBrowserTab();
+        tabs.push(tab);
+        buildPane(tab);
+        switchToTab(tab.id);
+      });
+      tabStrip.appendChild(newBtn);
     }
 
-    function renderAccount(id) {
-      const content = document.querySelector("#account-content");
-      const user = users.find(u => String(u.id) === String(id));
-      if (!user) {
-        content.innerHTML = `<div class="empty-note">No user found for ID ${id}.</div>`;
+    function buildPane(tab) {
+      const pane = document.createElement("div");
+      pane.className = "pane";
+      pane.id = "pane-" + tab.id;
+
+      if (tab.kind === "browser") {
+        const tpl = document.querySelector("#browser-pane-template");
+        pane.appendChild(tpl.content.cloneNode(true));
+        wireBrowserPane(tab, pane);
+      } else if (tab.kind === "app") {
+        const iframe = document.createElement("iframe");
+        iframe.src = tab.src;
+        pane.appendChild(iframe);
+      }
+
+      viewport.appendChild(pane);
+      paneEls[tab.id] = pane;
+    }
+
+    function wireBrowserPane(tab, pane) {
+      pane.querySelector('[data-app="games"]').addEventListener("click", () => openGamesTab());
+
+      pane.querySelector("#view-settings") // no-op ref just to ensure template ids resolved via pane
+    }
+
+    function switchToTab(id) {
+      activeTabId = id;
+      Object.values(paneEls).forEach(p => p.classList.remove("active"));
+      paneEls[id].classList.add("active");
+      renderTabStrip();
+      syncToolbarForActiveTab();
+    }
+
+    function closeTab(id) {
+      const idx = tabs.findIndex(t => t.id === id);
+      if (idx === -1) return;
+      const pane = paneEls[id];
+      if (pane) pane.remove();
+      delete paneEls[id];
+      tabs.splice(idx, 1);
+
+      if (tabs.length === 0) {
+        const tab = makeBrowserTab();
+        tabs.push(tab);
+        buildPane(tab);
+        switchToTab(tab.id);
         return;
       }
-      content.innerHTML = `
-        <div class="account-avatar-lg">🙂</div>
-        <div class="account-name">${user.username}</div>
-        <div class="account-id">User ID: ${user.id}</div>
-        <div class="account-divider"></div>
-        <div class="account-created">Account created: ${user.created}</div>
-      `;
-    }
 
-    function renderAccountPanel() {
-      if (currentUser) {
-        accountPanel.innerHTML = `
-          <div class="panel-user">
-            <div class="panel-avatar">🙂</div>
-            <div>
-              <div class="panel-name">${currentUser.username}</div>
-              <div class="panel-sub">ID: ${currentUser.id}</div>
-            </div>
-          </div>
-          <div class="panel-action secondary" id="panel-view-account">View account</div>
-          <div class="panel-divider"></div>
-          <div class="panel-action secondary" id="panel-sign-out">Sign out</div>
-        `;
-        document.querySelector("#panel-view-account").addEventListener("click", () => {
-          navigate(`cheddar://user-${currentUser.id}`);
-        });
-        document.querySelector("#panel-sign-out").addEventListener("click", () => {
-          currentUser = null;
-          renderAccountPanel();
-          updateProfileIcon();
-          closeAccountPanel();
-          navigate("cheddar://home");
-        });
+      if (activeTabId === id) {
+        const next = tabs[idx] || tabs[idx - 1] || tabs[0];
+        switchToTab(next.id);
       } else {
-        accountPanel.innerHTML = `
-          <div class="panel-note">You're not signed in to CheddarOS.</div>
-          <div class="panel-action primary" id="panel-sign-in">Sign in</div>
-          <div class="panel-link" id="panel-register">Create an account</div>
-        `;
-        document.querySelector("#panel-sign-in").addEventListener("click", () => navigate("cheddar://sign-in"));
-        document.querySelector("#panel-register").addEventListener("click", () => navigate("cheddar://register"));
+        renderTabStrip();
       }
     }
 
-    function updateProfileIcon() {
-      profileBtn.textContent = currentUser ? "🙂" : "👤";
-      profileBtn.title = currentUser ? currentUser.username : "Not signed in";
+    function openGamesTab() {
+      const tab = makeAppTab("CheddarGames", "games.html", "cheddar://games");
+      tabs.push(tab);
+      buildPane(tab);
+      switchToTab(tab.id);
     }
 
-    function closeAccountPanel() {
-      accountPanel.classList.remove("open");
-    }
-
-    function navigate(url, addToHistory = true) {
+    // ---- Browser-tab internal navigation (cheddar:// pages) ----
+    function navigateBrowserTab(tab, url, addToHistory = true) {
       url = url.trim();
-      addressInput.value = url;
-      closeAccountPanel();
+      const pane = paneEls[tab.id];
+      pane.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
 
       if (url === "cheddar://home") {
-        showView("view-home");
-        tabTitle.textContent = "New Tab";
+        pane.querySelector("#view-home").classList.add("active");
+        tab.title = "New Tab";
       } else if (url === "cheddar://settings") {
-        showView("view-settings");
-        tabTitle.textContent = "Settings";
-      } else if (url === "cheddar://users") {
-        renderUsersList();
-        showView("view-users");
-        tabTitle.textContent = "Choose an account";
-      } else if (url === "cheddar://sign-in") {
-        document.querySelector("#signin-error").textContent = "";
-        showView("view-signin");
-        tabTitle.textContent = "Sign in";
-      } else if (url === "cheddar://register") {
-        document.querySelector("#register-error").textContent = "";
-        showView("view-register");
-        tabTitle.textContent = "Create account";
-      } else if (url.startsWith("cheddar://user-")) {
-        const id = url.replace("cheddar://user-", "");
-        renderAccount(id);
-        showView("view-account");
-        tabTitle.textContent = "Account";
+        pane.querySelector("#view-settings").classList.add("active");
+        tab.title = "Settings";
       } else {
-        document.querySelector("#notfound-detail").textContent = `CheddarOS couldn't find "${url}".`;
-        showView("view-notfound");
-        tabTitle.textContent = "Not found";
+        pane.querySelector("[data-notfound-detail]").textContent = `CheddarOS couldn't find "${url}".`;
+        pane.querySelector("#view-notfound").classList.add("active");
+        tab.title = "Not found";
       }
 
       if (addToHistory) {
-        history = history.slice(0, historyIndex + 1);
-        history.push(url);
-        historyIndex = history.length - 1;
+        tab.history = tab.history.slice(0, tab.historyIndex + 1);
+        tab.history.push(url);
+        tab.historyIndex = tab.history.length - 1;
+      }
+
+      if (tab.id === activeTabId) {
+        addressInput.value = url;
+        renderTabStrip();
+        updateNavButtons();
+      }
+    }
+
+    function syncToolbarForActiveTab() {
+      const tab = currentTab();
+      if (!tab) return;
+      if (tab.kind === "browser") {
+        addressInput.value = tab.history[tab.historyIndex];
+      } else {
+        addressInput.value = tab.addr;
       }
       updateNavButtons();
     }
 
     function updateNavButtons() {
-      document.querySelector("#back-btn").classList.toggle("disabled", historyIndex <= 0);
-      document.querySelector("#fwd-btn").classList.toggle("disabled", historyIndex >= history.length - 1);
+      const tab = currentTab();
+      const backBtn = document.querySelector("#back-btn");
+      const fwdBtn = document.querySelector("#fwd-btn");
+      if (!tab || tab.kind !== "browser") {
+        backBtn.classList.add("disabled");
+        fwdBtn.classList.add("disabled");
+        return;
+      }
+      backBtn.classList.toggle("disabled", tab.historyIndex <= 0);
+      fwdBtn.classList.toggle("disabled", tab.historyIndex >= tab.history.length - 1);
     }
 
+    // ---- Toolbar controls ----
     document.querySelector("#back-btn").addEventListener("click", () => {
-      if (historyIndex > 0) { historyIndex--; navigate(history[historyIndex], false); }
+      const tab = currentTab();
+      if (!tab || tab.kind !== "browser") return;
+      if (tab.historyIndex > 0) { tab.historyIndex--; navigateBrowserTab(tab, tab.history[tab.historyIndex], false); }
     });
     document.querySelector("#fwd-btn").addEventListener("click", () => {
-      if (historyIndex < history.length - 1) { historyIndex++; navigate(history[historyIndex], false); }
+      const tab = currentTab();
+      if (!tab || tab.kind !== "browser") return;
+      if (tab.historyIndex < tab.history.length - 1) { tab.historyIndex++; navigateBrowserTab(tab, tab.history[tab.historyIndex], false); }
     });
-    document.querySelector("#reload-btn").addEventListener("click", () => navigate(history[historyIndex], false));
-    document.querySelector("#home-btn").addEventListener("click", () => navigate("cheddar://home"));
-    document.querySelector("#settings-btn").addEventListener("click", () => navigate("cheddar://settings"));
-
-    addressInput.addEventListener("keydown", (e) => { if (e.key === "Enter") navigate(addressInput.value); });
-
-    document.querySelectorAll(".app").forEach(app => {
-      app.addEventListener("click", () => { const dest = app.dataset.nav; if (dest) navigate(dest); });
-    });
-
-    document.querySelector("#user-search-input").addEventListener("input", (e) => renderUsersList(e.target.value));
-
-    document.querySelectorAll(".auth-link").forEach(link => {
-      link.addEventListener("click", () => navigate(link.dataset.nav));
-    });
-
-    // Profile avatar -> toggles the account panel right under the toolbar
-    profileBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      accountPanel.classList.toggle("open");
-    });
-    document.addEventListener("click", () => closeAccountPanel());
-    accountPanel.addEventListener("click", (e) => e.stopPropagation());
-
-    // ---- Mock auth logic (front-end only for now; no real backend yet) ----
-    document.querySelector("#signin-submit").addEventListener("click", () => {
-      const username = document.querySelector("#signin-username").value.trim();
-      const errorEl = document.querySelector("#signin-error");
-      if (!username) { errorEl.textContent = "Enter a username."; return; }
-      const user = users.find(u => u.username.toLowerCase() === username.toLowerCase());
-      if (!user) { errorEl.textContent = "No account found with that username."; return; }
-      currentUser = user;
-      updateProfileIcon();
-      renderAccountPanel();
-      navigate("cheddar://home");
-    });
-
-    document.querySelector("#register-submit").addEventListener("click", () => {
-      const username = document.querySelector("#register-username").value.trim();
-      const password = document.querySelector("#register-password").value;
-      const confirm = document.querySelector("#register-confirm").value;
-      const errorEl = document.querySelector("#register-error");
-
-      if (!username) { errorEl.textContent = "Choose a username."; return; }
-      if (users.some(u => u.username.toLowerCase() === username.toLowerCase())) {
-        errorEl.textContent = "That username is already taken."; return;
+    document.querySelector("#reload-btn").addEventListener("click", () => {
+      const tab = currentTab();
+      if (!tab) return;
+      if (tab.kind === "browser") {
+        navigateBrowserTab(tab, tab.history[tab.historyIndex], false);
+      } else {
+        const iframe = paneEls[tab.id].querySelector("iframe");
+        iframe.src = iframe.src;
       }
-      if (!password || password !== confirm) { errorEl.textContent = "Passwords don't match."; return; }
-
-      const newUser = { id: nextId++, username, created: formatToday() };
-      users.push(newUser);
-      currentUser = newUser;
-      updateProfileIcon();
-      renderAccountPanel();
-      navigate("cheddar://home");
+    });
+    document.querySelector("#home-btn").addEventListener("click", () => {
+      const tab = currentTab();
+      if (tab && tab.kind === "browser") navigateBrowserTab(tab, "cheddar://home");
+    });
+    document.querySelector("#settings-btn").addEventListener("click", () => {
+      const tab = currentTab();
+      if (tab && tab.kind === "browser") navigateBrowserTab(tab, "cheddar://settings");
     });
 
-    renderAccountPanel();
-    updateProfileIcon();
-    updateNavButtons();
+    addressInput.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
+      const tab = currentTab();
+      if (tab && tab.kind === "browser") navigateBrowserTab(tab, addressInput.value);
+    });
+
+    // ---- Init ----
+    const initialTab = makeBrowserTab();
+    tabs.push(initialTab);
+    buildPane(initialTab);
+    activeTabId = initialTab.id;
+    paneEls[initialTab.id].classList.add("active");
+    renderTabStrip();
+    syncToolbarForActiveTab();
   </script>
 </body>
 </html>
