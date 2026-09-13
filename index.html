@@ -64,55 +64,67 @@
     // We are in the installed PWA → show the launch button
     btnEl.style.display = 'block';
 
-    // Core injection
-    async function runInjection() {
-      btnEl.disabled = true;
-      btnEl.textContent = 'Launching…';
+async function runInjection() {
+  btnEl.disabled = true;
+  btnEl.textContent = 'Launching…';
 
-      // Open about:blank FIRST (while we still have user activation)
-      const newWin = window.open('about:blank#cheddar', '_blank');
+  // Use empty string instead of 'about:blank#cheddar'
+  // This is more reliable in PWAs
+  const newWin = window.open('', '_blank');
 
-      if (!newWin) {
-        btnEl.textContent = 'Popup blocked – allow popups';
-        btnEl.disabled = false;
-        return;
-      }
+  if (!newWin) {
+    btnEl.textContent = 'Popup blocked – allow popups';
+    btnEl.disabled = false;
+    return;
+  }
 
-      try {
-        const targetUrl = new URL('/core/browser.html', window.location.origin).href;
-        const baseHref  = new URL('/core/', window.location.origin).href;
+  // Immediately write a temporary loading page so the window isn’t empty
+  newWin.document.open();
+  newWin.document.write(`
+    <!doctype html>
+    <html>
+      <head><title>CheddarOS</title></head>
+      <body style="background:#000;color:#fff;font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0">
+        Loading CheddarOS…
+      </body>
+    </html>
+  `);
+  newWin.document.close();
 
-        const response = await fetch(`${targetUrl}?t=${Date.now()}`, { cache: 'no-store' });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  try {
+    const targetUrl = new URL('/core/browser.html', window.location.origin).href;
+    const baseHref  = new URL('/core/', window.location.origin).href;
 
-        const htmlContent = await response.text();
+    const response = await fetch(`${targetUrl}?t=${Date.now()}`, { cache: 'no-store' });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-        newWin.document.open();
-        newWin.document.write(`<base href="${baseHref}">${htmlContent}`);
-        newWin.document.close();
+    const htmlContent = await response.text();
 
-        // Try to close the launcher window (browsers often ignore this)
-        try {
-          window.open('', '_self');
-          window.close();
-        } catch (_) {}
+    // Overwrite with the real content
+    newWin.document.open();
+    newWin.document.write(`<base href="${baseHref}">${htmlContent}`);
+    newWin.document.close();
 
-      } catch (e) {
-        console.error('Injection failed:', e);
-        newWin.document.open();
-        newWin.document.write(`
-          <html><body style="background:#111;color:#fff;font-family:system-ui;padding:40px">
-            <h2>Failed to load CheddarOS</h2>
-            <p>${e.message || e}</p>
-          </body></html>
-        `);
-        newWin.document.close();
-        btnEl.textContent = 'Failed – try again';
-        btnEl.disabled = false;
-      }
-    }
+    // Optional: try to make the address bar show about:blank
+    try {
+      newWin.history.replaceState(null, '', 'about:blank#cheddar');
+    } catch (_) {}
 
-    // Button click = guaranteed user activation
+  } catch (e) {
+    console.error(e);
+    newWin.document.open();
+    newWin.document.write(`
+      <html><body style="background:#111;color:#fff;font-family:system-ui;padding:40px">
+        <h2>Failed to load CheddarOS</h2>
+        <pre>${e.message || e}</pre>
+      </body></html>
+    `);
+    newWin.document.close();
+    btnEl.textContent = 'Failed – try again';
+    btnEl.disabled = false;
+  }
+}
+    
     btnEl.addEventListener('click', runInjection);
   }
 
