@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -9,21 +9,18 @@
     <link rel="icon" href="loader/favicon.png" type="image/png">
 </head>
 <body>
-
-    <div id="status">Loading...</div>
-
+    <div id="status"></div>
     <script>
         const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
         if (isPWA) {
-            // Fetch core/browser.html and write its content into the new window
             fetch('core/browser.html')
                 .then(response => {
                     if (!response.ok) throw new Error('Failed to load core/browser.html');
                     return response.text();
                 })
                 .then(htmlContent => {
-                    const newWindow = window.open('about:blank', '_blank', 'width=800,height=600,toolbar=no,menubar=no,scrollbars=yes,resizable=yes');
+                    const newWindow = window.open('about:blank#cheddar', '_blank', 'width=800,height=600,toolbar=no,menubar=no,scrollbars=yes,resizable=yes');
                     if (newWindow) {
                         newWindow.document.write(htmlContent);
                         newWindow.document.close();
@@ -47,6 +44,5 @@
             });
         }
     </script>
-
 </body>
 </html>
