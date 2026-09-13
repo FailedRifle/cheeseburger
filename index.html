@@ -1,151 +1,67 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-  <link href="/loader/favicon.png" rel="icon" type="image/png">
-  <link id="pwa-manifest" rel="manifest" href="/loader/manifest.json">
-  <meta name="theme-color" content="#000000">
-  <title>CheddarOS</title>
-  <style>
-    html, body {
-      margin: 0;
-      width: 100%;
-      height: 100%;
-      background: #000;
-      overflow: hidden;
-      font-family: system-ui, -apple-system, sans-serif;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      gap: 16px;
-    }
-    #msg {
-      font-size: 14px;
-      color: #888;
-      text-align: center;
-      max-width: 260px;
-      line-height: 1.4;
-      display: none;
-    }
-    #launch-btn {
-      padding: 14px 28px;
-      font-size: 16px;
-      font-weight: 600;
-      background: #1a1a1a;
-      color: #fff;
-      border: 1px solid #444;
-      border-radius: 10px;
-      cursor: pointer;
-      display: none;
-    }
-    #launch-btn:hover {
-      background: #2a2a2a;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PWA vs Browser Detector</title>
+    
+    <!-- Link your manifest so the browser recognizes it as a PWA -->
+    <link rel="manifest" href="manifest.json">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        .message {
+            font-size: 24px;
+            font-weight: bold;
+            padding: 20px;
+            border-radius: 8px;
+            display: inline-block;
+        }
+        /* Default style for Browser */
+        .browser-msg {
+            color: #d9534f;
+            background-color: #f2dede;
+        }
+        /* Style when running as PWA */
+        .pwa-msg {
+            color: #5cb85c;
+            background-color: #dff0d8;
+        }
+    </style>
 </head>
 <body>
-  <div id="msg">Open CheddarOS from the installed app (PWA) to launch.</div>
-  <button id="launch-btn">Launch CheddarOS</button>
 
-<script>
-  const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
-                window.navigator.standalone === true;
+    <div id="status" class="message browser-msg">
+        You are currently on the Browser!
+    </div>
 
-  const msgEl  = document.getElementById('msg');
-  const btnEl  = document.getElementById('launch-btn');
+    <script>
+        // Method 1: Check using matchMedia (Standard way for standalone mode)
+        const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
-  // ---------- Only run in PWA ----------
-  if (!isPWA) {
-    msgEl.style.display = 'block';
-  } else {
-    // We are in the installed PWA → show the launch button
-    btnEl.style.display = 'block';
+        const statusDiv = document.getElementById('status');
 
-async function runInjection() {
-  btnEl.disabled = true;
-  btnEl.textContent = 'Launching…';
+        if (isPWA) {
+            statusDiv.textContent = "You are currently on the PWA!";
+            statusDiv.className = "message pwa-msg";
+        } else {
+            statusDiv.textContent = "You are currently on the Browser!";
+            statusDiv.className = "message browser-msg";
+        }
 
-  // Use empty string instead of 'about:blank#cheddar'
-  // This is more reliable in PWAs
-  const newWin = window.open('', '_blank');
+        // Optional: Register your service worker so the PWA install prompt / offline features work smoothly
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(reg => console.log('Service Worker registered!', reg))
+                    .catch(err => console.log('Service Worker registration failed:', err));
+            });
+        }
+    </script>
 
-  if (!newWin) {
-    btnEl.textContent = 'Popup blocked – allow popups';
-    btnEl.disabled = false;
-    return;
-  }
-
-  // Immediately write a temporary loading page so the window isn’t empty
-  newWin.document.open();
-  newWin.document.write(`
-    <!doctype html>
-    <html>
-      <head><title>CheddarOS</title></head>
-      <body style="background:#000;color:#fff;font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0">
-        Loading CheddarOS…
-      </body>
-    </html>
-  `);
-  newWin.document.close();
-
-  try {
-    const targetUrl = new URL('/core/browser.html', window.location.origin).href;
-    const baseHref  = new URL('/core/', window.location.origin).href;
-
-    const response = await fetch(`${targetUrl}?t=${Date.now()}`, { cache: 'no-store' });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-    const htmlContent = await response.text();
-
-    // Overwrite with the real content
-    newWin.document.open();
-    newWin.document.write(`<base href="${baseHref}">${htmlContent}`);
-    newWin.document.close();
-
-    // Optional: try to make the address bar show about:blank
-    try {
-      newWin.history.replaceState(null, '', 'about:blank#cheddar');
-    } catch (_) {}
-
-  } catch (e) {
-    console.error(e);
-    newWin.document.open();
-    newWin.document.write(`
-      <html><body style="background:#111;color:#fff;font-family:system-ui;padding:40px">
-        <h2>Failed to load CheddarOS</h2>
-        <pre>${e.message || e}</pre>
-      </body></html>
-    `);
-    newWin.document.close();
-    btnEl.textContent = 'Failed – try again';
-    btnEl.disabled = false;
-  }
-}
-    
-    btnEl.addEventListener('click', runInjection);
-  }
-
-  // ---------- PWA install prompt (only relevant in regular browser) ----------
-  if (!isPWA) {
-    let deferredPrompt = null;
-
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-    });
-
-    // Optional: you can add a custom “Install” button here if you want
-  }
-
-  // Service worker
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/loader/service-worker.js').catch(() => {});
-    });
-  }
-</script>
 </body>
 </html>
