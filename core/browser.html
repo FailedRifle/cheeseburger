@@ -236,8 +236,19 @@
       transition: border-color 0.1s ease, box-shadow 0.1s ease;
     }
     .search-box:hover { border-color: #4d4e52; box-shadow: 0 1px 6px rgba(0,0,0,0.3); }
+    .search-box:focus-within { border-color: var(--accent); box-shadow: 0 1px 6px rgba(0,0,0,0.3); }
     .search-box .search-icon { display: flex; color: var(--text-faint); flex-shrink: 0; }
     .search-box .search-icon svg { width: 16px; height: 16px; }
+    .search-box input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-size: 14px;
+      font-family: inherit;
+    }
+    .search-box input::placeholder { color: var(--text-dim); }
 
     .apps-section {
       width: 100%;
@@ -335,7 +346,7 @@
         </div>
         <div class="search-box">
           <span class="search-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
-          <span>Search on CheddarOS</span>
+          <input type="text" data-home-search placeholder="Search on CheddarOS" spellcheck="false">
         </div>
         <div class="apps-section">
           <div class="apps-label">Apps</div>
@@ -542,8 +553,42 @@
       el.textContent = OS_VERSION;
     }
 
+    function isCheddarCommand(value) {
+      return /^cheddar:\/\//i.test(value.trim());
+    }
+
+    function handleSearch(tab, rawValue) {
+      const value = rawValue.trim();
+      if (!value) return;
+
+      // Typing a cheddar:// command into the search box behaves like the
+      // address bar rather than firing off a web search.
+      if (isCheddarCommand(value)) {
+        navigateBrowserTab(tab, value);
+        if (tab.id === activeTabId) addressInput.value = value;
+        return;
+      }
+
+      // Otherwise open the results as a new app tab, so the current
+      // browser tab (and its cheddar:// history) is left untouched.
+      const query = encodeURIComponent(value);
+      const searchTab = makeAppTab(
+        value,
+        `https://www.bing.com/search?q=${query}`,
+        `cheddar://search?q=${query}`
+      );
+      tabs.push(searchTab);
+      buildPane(searchTab);
+      switchToTab(searchTab.id);
+    }
+
     function wireBrowserPane(tab, pane) {
       pane.querySelector('[data-app="games"]').addEventListener("click", () => openGamesTab());
+      pane.querySelector('[data-home-search]').addEventListener("keydown", (e) => {
+        if (e.key !== "Enter") return;
+        handleSearch(tab, e.target.value);
+        e.target.value = "";
+      });
       renderChangelog(pane);
       renderFooter(pane);
       renderVersion(pane);
