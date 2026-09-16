@@ -32,6 +32,12 @@ fastify.register(fastifyStatic, {
   decorateReply: false,
 });
 fastify.register(fastifyStatic, { root: baremuxPath, prefix: "/baremux/", decorateReply: false });
+fastify.addHook("onSend", async (request, reply, payload) => {
+  if (request.url.startsWith("/proxy-assets/ultraworker.js")) {
+    reply.header("Service-Worker-Allowed", "/");
+  }
+  return payload;
+});
 
 if (process.env.VERCEL !== "1") {
   fastify.listen({ port: Number(process.env.PORT || 4040), host: "0.0.0.0" })

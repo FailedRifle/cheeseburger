@@ -18,6 +18,10 @@ self.addEventListener("install", () => {
   self.skipWaiting();
 });
 
+self.addEventListener("activate", (event) => {
+  event.waitUntil(self.clients.claim());
+});
+
 async function handleRequest(event) {
   if (sw.route(event)) {
     return sw.fetch(event);

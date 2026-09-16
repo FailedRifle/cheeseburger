@@ -6,12 +6,14 @@ import {
   setTransport,
   setWisp,
   getProxyType,
-} from "/proxy-assets/lithium.mjs?v=2";
+} from "/proxy-assets/lithium.mjs?v=5";
 
 const wisp = `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/wisp/`;
 
 async function prepareProxy() {
-  await setTransport(localStorage.getItem("proxy-transport") || "libcurl");
+  // Older builds persisted Libcurl, which can hang on restricted networks.
+  // Migrate that stale selection to the working bundled transport once.
+  await setTransport("epoxy");
   await setWisp(wisp);
   await ensureProxyReady();
 }

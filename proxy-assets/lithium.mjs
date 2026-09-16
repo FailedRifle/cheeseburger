@@ -92,7 +92,10 @@ export async function registerSW() {
     throw new Error("Your browser doesn't support service workers.");
   }
 
-  await navigator.serviceWorker.register(stockSW, { scope: "/proxy-assets/" });
+  await navigator.serviceWorker.register(stockSW, { scope: "/" });
+  // Do not navigate an iframe until the worker is active; otherwise the
+  // first proxied document can bypass UV and be rejected by its frame policy.
+  await navigator.serviceWorker.ready;
 }
 
 export async function ensureProxyReady() {
