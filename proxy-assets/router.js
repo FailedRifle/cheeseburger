@@ -1,0 +1,36 @@
+import {
+  makeURL,
+  proxySJ,
+  proxyUV,
+  ensureProxyReady,
+  setTransport,
+  setWisp,
+  getProxyType,
+} from "/proxy-assets/lithium.mjs";
+
+const wisp = `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/wisp/`;
+
+async function prepareProxy() {
+  await setTransport(localStorage.getItem("proxy-transport") || "libcurl");
+  await setWisp(wisp);
+  await ensureProxyReady();
+}
+
+window.cheddarProxyOpen = async (input) => {
+  await prepareProxy();
+  const url = makeURL(input);
+  const selected = getProxyType();
+  if (selected === "SJ") return proxySJ(url);
+  if (selected === "UV") return proxyUV(url);
+
+  try {
+    return await proxyUV(url);
+  } catch (error) {
+    console.warn("UV failed; retrying with Scramjet", error);
+    return proxySJ(url);
+  }
+};
+
+window.addEventListener("load", () => {
+  prepareProxy().catch((error) => console.warn("Proxy startup deferred", error));
+});

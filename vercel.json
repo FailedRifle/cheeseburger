@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "fluid": true,
+  "functions": { "api/wisp.js": { "maxDuration": 300 } },
+  "rewrites": [{ "source": "/wisp/:path*", "destination": "/api/wisp" }],
+  "headers": [{
+    "source": "/(.*)",
+    "headers": [
+      { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
+      { "key": "Cross-Origin-Embedder-Policy", "value": "require-corp" }
+    ]
+  }]
+}

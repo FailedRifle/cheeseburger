@@ -309,6 +309,8 @@
     .changelog-items { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 5px; }
     .changelog-items li { font-size: 13px; color: var(--text-dim); line-height: 1.45; }
   </style>
+  <script src="/proxy-assets/uv/uv.bundle.js"></script>
+  <script src="/proxy-assets/uv/uv.config.js"></script>
 </head>
 <body>
   <div class="browser">
@@ -557,7 +559,7 @@
       return /^cheddar:\/\//i.test(value.trim());
     }
 
-    function handleSearch(tab, rawValue) {
+    async function handleSearch(tab, rawValue) {
       const value = rawValue.trim();
       if (!value) return;
 
@@ -569,12 +571,13 @@
         return;
       }
 
-      // Otherwise open the results as a new app tab, so the current
-      // browser tab (and its cheddar:// history) is left untouched.
+      // Search results are opened through the selected proxy backend.
       const query = encodeURIComponent(value);
+      const destination = `https://duckduckgo.com/?q=${query}`;
+      const proxied = await window.cheddarProxyOpen?.(destination) || destination;
       const searchTab = makeAppTab(
         value,
-        `https://www.bing.com/search?q=${query}`,
+        proxied,
         `cheddar://search?q=${query}`
       );
       tabs.push(searchTab);
@@ -586,7 +589,7 @@
       pane.querySelector('[data-app="games"]').addEventListener("click", () => openGamesTab());
       pane.querySelector('[data-home-search]').addEventListener("keydown", (e) => {
         if (e.key !== "Enter") return;
-        handleSearch(tab, e.target.value);
+        handleSearch(tab, e.target.value).catch(console.error);
         e.target.value = "";
       });
       renderChangelog(pane);
@@ -726,7 +729,9 @@
     addressInput.addEventListener("keydown", (e) => {
       if (e.key !== "Enter") return;
       const tab = currentTab();
-      if (tab && tab.kind === "browser") navigateBrowserTab(tab, addressInput.value);
+      if (tab && tab.kind === "browser") {
+        handleSearch(tab, addressInput.value).catch(console.error);
+      }
     });
 
     renderAnnouncement();
@@ -738,5 +743,6 @@
     renderTabStrip();
     syncToolbarForActiveTab();
   </script>
+  <script type="module" src="/proxy-assets/router.js"></script>
 </body>
 </html>
