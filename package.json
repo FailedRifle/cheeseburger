@@ -6,7 +6,7 @@
   "scripts": { "start": "node src/index.js" },
   "dependencies": {
     "@fastify/static": "9.0.0",
-    "@mercuryworkshop/bare-mux": "1.1.4",
+    "@mercuryworkshop/bare-mux": "2.1.7",
     "@mercuryworkshop/epoxy-transport": "^2.1.28",
     "@mercuryworkshop/libcurl-transport": "^1.5.2",
     "@mercuryworkshop/wisp-js": "^0.4.1",

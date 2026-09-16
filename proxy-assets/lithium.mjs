@@ -3,11 +3,11 @@
 //////////////////////////////
 // Use the browser bundle here; the server package exposes bare Node imports
 // that browsers cannot resolve (which would stop every proxy page module).
-import { BareMuxConnection } from "https://unpkg.com/@mercuryworkshop/bare-mux@2.1.7/dist/index.mjs";
+import { BareMuxConnection } from "/baremux/index.mjs";
 //////////////////////////////
 ///         Options        ///
 //////////////////////////////
-const connection = new BareMuxConnection("/proxy-assets/bareworker.js");
+const connection = new BareMuxConnection("/baremux/worker.js?v=2");
 
 let wispURL;
 let transportURL;
@@ -27,30 +27,45 @@ async function initializeScramjet() {
   await import(`/proxy-assets/scram/scramjet.all.js`);
 
   const { ScramjetController } = window.$scramjetLoadController();
-
-  scramjet = new ScramjetController({
-    files: {
-      wasm: `/proxy-assets/scram/scramjet.wasm.wasm`,
-      all: `/proxy-assets/scram/scramjet.all.js`,
-      sync: `/proxy-assets/scram/scramjet.sync.js`,
-      prefix: "/proxy-assets/scramjet/",
-    },
-    siteFlags: {
-      "https://www.google.com/(search|sorry).*": {
-        naiiveRewriter: true,
+  const createController = () => new ScramjetController({
+      files: {
+        wasm: `/proxy-assets/scram/scramjet.wasm.wasm`,
+        all: `/proxy-assets/scram/scramjet.all.js`,
+        sync: `/proxy-assets/scram/scramjet.sync.js`,
+        prefix: "/proxy-assets/scramjet/",
       },
-    },
-  });
+      siteFlags: {
+        "https://www.google.com/(search|sorry).*": {
+          naiiveRewriter: true,
+        },
+      },
+    });
 
-  scramjet.init();
+  scramjet = createController();
+  try {
+    await scramjet.init();
+  } catch (error) {
+    // A previous deployment can leave the Scramjet IDB schema half-created.
+    // Reset only Scramjet's own database, then initialize once more.
+    if (error?.name !== "NotFoundError") throw error;
+    await new Promise((resolve, reject) => {
+      const request = indexedDB.deleteDatabase("$scramjet");
+      request.onsuccess = request.onerror = request.onblocked = resolve;
+      request.onerror = () => reject(request.error);
+    });
+    scramjet = createController();
+    await scramjet.init();
+  }
   window.scramjet = scramjet;
   return scramjet;
   })();
   return scramjetReady;
 }
 const transportOptions = {
-  epoxy: "/epoxy/index.mjs",
-  libcurl: "/libcurl/index.mjs",
+  // BareMux's CDN worker evaluates transport imports from an about:blank
+  // worker context, so root-relative URLs cannot be resolved there.
+  epoxy: `${location.origin}/epoxy/index.mjs`,
+  libcurl: `${location.origin}/libcurl/index.mjs`,
 };
 
 //////////////////////////////
