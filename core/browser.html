@@ -34,7 +34,6 @@
       background: var(--bg-app);
     }
 
-    /* Tabs */
     .tab-strip {
       display: flex;
       align-items: flex-end;
@@ -85,7 +84,6 @@
     }
     .tab-new:hover { color: var(--text); background: var(--bg-surface); }
 
-    /* Toolbar */
     .toolbar {
       display: flex;
       align-items: center;
@@ -166,7 +164,6 @@
     .bookmark.is-link { cursor: pointer; }
     .bookmark.is-link:hover { background: var(--bg-elevated-2); color: var(--text); }
 
-    /* Viewport */
     .viewport {
       flex: 1;
       background: var(--bg-app);
@@ -186,7 +183,6 @@
     .view { display: none; height: 100%; width: 100%; }
     .view.active { display: flex; flex: 1; }
 
-    /* Home view */
     #view-home { align-items: center; justify-content: center; position: relative; }
     .announcement-banner {
       width: 100%;
@@ -281,13 +277,11 @@
       text-align: center;
     }
 
-    /* Generic page */
     #view-settings { align-items: flex-start; justify-content: flex-start; }
     .page { width: 100%; padding: 28px 48px; }
     .page h2 { font-size: 19px; color: var(--text); margin: 0 0 22px; font-weight: 600; }
     .empty-note { color: var(--text-faint); font-size: 14px; }
 
-    /* Changelog view */
     #view-changelog { align-items: flex-start; justify-content: flex-start; }
     .changelog-page { max-width: 720px; }
     .changelog-list { display: flex; flex-direction: column; gap: 16px; }
@@ -309,8 +303,6 @@
     .changelog-items { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 5px; }
     .changelog-items li { font-size: 13px; color: var(--text-dim); line-height: 1.45; }
   </style>
-  <script src="/proxy-assets/uv/uv.bundle.js"></script>
-  <script src="/proxy-assets/uv/uv.config.js"></script>
 </head>
 <body>
   <div class="browser">
@@ -387,7 +379,7 @@
     const ANNOUNCEMENT_TEXT = "";
     const OS_VERSION = "v1.0.0";
 
-    const changelogData = [ // { ver:"v", date:"", items:[""] },
+    const changelogData = [
       { ver:"v1.1.0", date:"", items:[""] },
       { ver:"v1.0.0", date:"9/08/2026", items:["CheddarOS officially released","Added 23 new games","Made the game icons appear next to the game in the sidebar","Popular games are now based of statistic from users","You can now view when a user is online, offline, or ingame","Added quick links so you can click a user inside the credits to go to their profile","Moved the info inside the credits","Added some account settings inside the Settings tab","Started core logic for CheddarOS Browser","Changed the style so its more simple looking","Made CheddarGPT Private access","Removed the support tab","Added a quick report button inside the all game pages for quick and easy bug reports","Added an account system for easier data saving when changing links and stat checking","Removed the Info tab and merged it into Credits","Added a Terms of Service","Added an All Accounts directory to the Users tab"] },
       { ver:"vBETA-1.3.3", date:"5/22/2026", items:["Added Plants VS. Zombies"] },
@@ -555,41 +547,67 @@
       el.textContent = OS_VERSION;
     }
 
+    const domainPattern = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+(:\d+)?(\/\S*)?$/i;
+
     function isCheddarCommand(value) {
-      return /^cheddar:\/\//i.test(value.trim());
+      return /^cheddar:\/\//i.test(value);
     }
 
-    async function handleSearch(tab, rawValue) {
-      const value = rawValue.trim();
-      if (!value) return;
+    function looksLikeAddress(value) {
+      if (/^https?:\/\//i.test(value)) return true;
+      if (/\s/.test(value)) return false;
+      return domainPattern.test(value);
+    }
 
-      // Typing a cheddar:// command into the search box behaves like the
-      // address bar rather than firing off a web search.
-      if (isCheddarCommand(value)) {
-        navigateBrowserTab(tab, value);
-        if (tab.id === activeTabId) addressInput.value = value;
+    function toAbsoluteUrl(value) {
+      return /^https?:\/\//i.test(value) ? value : `https://${value}`;
+    }
+
+    function omniboxDestination(raw) {
+      const value = raw.trim();
+      if (!value) return null;
+      if (isCheddarCommand(value)) return { kind: "cheddar", url: value };
+      if (looksLikeAddress(value)) {
+        const url = toAbsoluteUrl(value);
+        return { kind: "link", url, label: url.replace(/^https?:\/\//i, "").replace(/\/$/, "") };
+      }
+      return { kind: "search", query: value };
+    }
+
+    function goToDestination(tab, raw) {
+      const dest = omniboxDestination(raw);
+      if (!dest) return;
+
+      if (dest.kind === "cheddar") {
+        navigateBrowserTab(tab, dest.url);
         return;
       }
 
-      // Search results are opened through the selected proxy backend.
-      const query = encodeURIComponent(value);
-      const destination = `https://duckduckgo.com/?q=${query}`;
-      const proxied = await window.cheddarProxyOpen?.(destination) || destination;
-      const searchTab = makeAppTab(
-        value,
-        proxied,
-        `cheddar://search?q=${query}`
-      );
-      tabs.push(searchTab);
-      buildPane(searchTab);
-      switchToTab(searchTab.id);
+      const url = dest.kind === "link" ? dest.url : `https://www.bing.com/search?q=${encodeURIComponent(dest.query)}`;
+      const addr = dest.kind === "link" ? dest.url : `cheddar://search?q=${encodeURIComponent(dest.query)}`;
+      const title = dest.kind === "link" ? dest.label : dest.query;
+
+      if (tab.kind === "app") {
+        tab.src = url;
+        tab.addr = addr;
+        tab.title = title;
+        paneEls[tab.id].querySelector("iframe").src = url;
+        if (tab.id === activeTabId) addressInput.value = addr;
+        renderTabStrip();
+        return;
+      }
+
+      const newTab = makeAppTab(title, url, addr);
+      tabs.push(newTab);
+      buildPane(newTab);
+      switchToTab(newTab.id);
     }
 
     function wireBrowserPane(tab, pane) {
       pane.querySelector('[data-app="games"]').addEventListener("click", () => openGamesTab());
       pane.querySelector('[data-home-search]').addEventListener("keydown", (e) => {
         if (e.key !== "Enter") return;
-        handleSearch(tab, e.target.value).catch(console.error);
+        goToDestination(tab, e.target.value);
         e.target.value = "";
       });
       renderChangelog(pane);
@@ -729,9 +747,7 @@
     addressInput.addEventListener("keydown", (e) => {
       if (e.key !== "Enter") return;
       const tab = currentTab();
-      if (tab && tab.kind === "browser") {
-        handleSearch(tab, addressInput.value).catch(console.error);
-      }
+      if (tab) goToDestination(tab, addressInput.value);
     });
 
     renderAnnouncement();
@@ -743,6 +759,5 @@
     renderTabStrip();
     syncToolbarForActiveTab();
   </script>
-  <script type="module" src="/proxy-assets/router.js?v=6"></script>
 </body>
 </html>
