@@ -595,7 +595,7 @@
         return true;
       }
 
-      const url = dest.kind === "link" ? dest.url : `https://www.bing.com/search?q=${encodeURIComponent(dest.query)}`;
+      const url = dest.kind === "link" ? dest.url : `https://duckduckgo.com/?q=${encodeURIComponent(dest.query)}`;
       const addr = dest.kind === "link" ? dest.url : `cheddar://search?q=${encodeURIComponent(dest.query)}`;
       const title = dest.kind === "link" ? dest.label : dest.query;
 
