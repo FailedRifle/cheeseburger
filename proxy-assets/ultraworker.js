@@ -27,7 +27,13 @@ async function handleRequest(event) {
     return sw.fetch(event);
   }
 
-  await scramjet.loadConfig();
+  try {
+    await scramjet.loadConfig();
+  } catch (error) {
+    // A Scramjet storage/config failure must not take down ordinary site pages.
+    console.error("Scramjet configuration unavailable:", error);
+    return fetch(event.request);
+  }
   // Scramjet only receives its configuration when the browser explicitly
   // initializes that proxy. Until then, loadConfig() leaves config unset and
   // route() cannot safely inspect a prefix. Let ordinary site requests pass
