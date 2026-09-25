@@ -41,6 +41,7 @@
 <body>
     <div id="status">Please install the app to continue using CheddarOS</div>
     <button id="install-btn">Install</button>
+
     <script>
         const installable = true;
         const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
@@ -51,24 +52,51 @@
         }
 
         if (isPWA && installable) {
-            fetch('core/browser.html')
-                .then(response => {
-                    if (!response.ok) throw new Error();
-                    return response.text();
-                })
-                .then(htmlContent => {
-                    const newWindow = window.open('about:blank#cheddar', '_blank', 'width=800,height=600,toolbar=no,menubar=no,scrollbars=yes,resizable=yes');
-                    if (newWindow) {
-                        newWindow.document.write(htmlContent);
-                        newWindow.document.close();
-                        window.close();
-                    } else {
-                        document.body.textContent = "Popup blocked - please allow popups for this site.";
-                    }
-                })
-                .catch(() => {
-                    document.body.textContent = "Error loading core/browser.html";
-                });
+            // Get full absolute URL to core/browser.html (works on root or subfolders)
+            const browserUrl = new URL('core/browser.html', window.location.href).href;
+
+            const newWindow = window.open('about:blank#cheddar', '_blank', 'width=800,height=600,toolbar=no,menubar=no,scrollbars=yes,resizable=yes');
+
+            if (newWindow) {
+                const doc = newWindow.document;
+                
+                // Write shell wrapper that keeps proper HTTPS origin state intact
+                doc.open();
+                doc.write(`
+                    <!DOCTYPE html>
+                    <html lang="en">
+                    <head>
+                        <meta charset="UTF-8">
+                        <title>CheddarOS</title>
+                        <style>
+                            html, body {
+                                margin: 0;
+                                padding: 0;
+                                width: 100vw;
+                                height: 100vh;
+                                overflow: hidden;
+                                background-color: #000;
+                            }
+                            iframe {
+                                width: 100%;
+                                height: 100%;
+                                border: none;
+                                outline: none;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <iframe src="${browserUrl}"></iframe>
+                    </body>
+                    </html>
+                `);
+                doc.close();
+
+                // Close launch tab
+                window.close();
+            } else {
+                document.body.textContent = "Popup blocked - please allow popups for this site.";
+            }
         } else if (installable) {
             const btn = document.getElementById('install-btn');
             
@@ -91,6 +119,7 @@
             });
         }
 
+        // SW pre-registration on root document context
         if ('serviceWorker' in navigator && installable) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('loader/service-worker.js', { scope: './' }).catch(() => {});
