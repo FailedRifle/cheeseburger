@@ -6,6 +6,7 @@
     { "source": "/baremux/index.mjs", "destination": "/api/proxy-assets?asset=baremux-index" },
     { "source": "/baremux/worker.js", "destination": "/api/proxy-assets?asset=baremux-worker" },
     { "source": "/epoxy/index.mjs", "destination": "/api/proxy-assets?asset=epoxy-index" },
+    { "source": "/wisp/", "destination": "/api/wisp" },
     { "source": "/wisp/:path*", "destination": "/api/wisp" }
   ],
   "headers": [{
