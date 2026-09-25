@@ -611,7 +611,7 @@
           pane.querySelectorAll(".view").forEach(view => view.classList.remove("active"));
           pane.querySelector("#view-notfound").classList.add("active");
           pane.querySelector("[data-notfound-detail]").textContent =
-            "The browser proxy could not start. Please try again in a moment.";
+            `The browser proxy could not start: ${error?.message || error}`;
           tab.title = "Proxy unavailable";
           renderTabStrip();
         } else {

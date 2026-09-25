@@ -7,6 +7,7 @@ import {
   proxySJ,
   proxyUV,
   ensureProxyReady,
+  registerSW,
   setTransport,
   setWisp,
   getProxyType,
@@ -19,20 +20,23 @@ async function prepareProxy() {
   // Migrate that stale selection to the working bundled transport once.
   await setTransport("epoxy");
   await setWisp(wisp);
-  await ensureProxyReady();
+  await registerSW();
 }
 
 window.cheddarProxyOpen = async (input) => {
   await prepareProxy();
   const url = makeURL(input);
   const selected = getProxyType();
-  if (selected === "SJ") return proxySJ(url);
-  if (selected === "UV") return proxyUV(url);
+  if (selected === "SJ") {
+    await ensureProxyReady();
+    return proxySJ(url);
+  }
 
   try {
     return await proxyUV(url);
   } catch (error) {
     console.warn("UV failed; retrying with Scramjet", error);
+    await ensureProxyReady();
     return proxySJ(url);
   }
 };
