@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script type="module" src="/proxy-assets/router.js?v=5"></script>
   <style>
     * { box-sizing: border-box; }
     :root {
@@ -574,7 +575,7 @@
       return { kind: "search", query: value };
     }
 
-    function goToDestination(tab, raw) {
+    async function goToDestination(tab, raw) {
       const dest = omniboxDestination(raw);
       if (!dest) return;
 
@@ -587,17 +588,21 @@
       const addr = dest.kind === "link" ? dest.url : `cheddar://search?q=${encodeURIComponent(dest.query)}`;
       const title = dest.kind === "link" ? dest.label : dest.query;
 
+      // External pages must go through the proxy. Loading Bing (or any other
+      // external site) directly in this iframe is blocked by its frame policy.
+      const proxiedUrl = await window.cheddarProxyOpen(url);
+
       if (tab.kind === "app") {
-        tab.src = url;
+        tab.src = proxiedUrl;
         tab.addr = addr;
         tab.title = title;
-        paneEls[tab.id].querySelector("iframe").src = url;
+        paneEls[tab.id].querySelector("iframe").src = proxiedUrl;
         if (tab.id === activeTabId) addressInput.value = addr;
         renderTabStrip();
         return;
       }
 
-      const newTab = makeAppTab(title, url, addr);
+      const newTab = makeAppTab(title, proxiedUrl, addr);
       tabs.push(newTab);
       buildPane(newTab);
       switchToTab(newTab.id);
