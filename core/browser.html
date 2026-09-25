@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script type="module" src="/proxy-assets/router.js?v=5"></script>
   <style>
     * { box-sizing: border-box; }
     :root {
@@ -564,6 +563,18 @@
       return /^https?:\/\//i.test(value) ? value : `https://${value}`;
     }
 
+    let proxyRouterPromise;
+    async function proxyExternalUrl(url) {
+      // The browser is written into an about:blank popup, so load the router
+      // explicitly on first navigation instead of racing its module script.
+      proxyRouterPromise ??= import("/proxy-assets/router.js?v=5");
+      await proxyRouterPromise;
+      if (typeof window.cheddarProxyOpen !== "function") {
+        throw new Error("The proxy router did not initialize.");
+      }
+      return window.cheddarProxyOpen(url);
+    }
+
     function omniboxDestination(raw) {
       const value = raw.trim();
       if (!value) return null;
@@ -590,7 +601,24 @@
 
       // External pages must go through the proxy. Loading Bing (or any other
       // external site) directly in this iframe is blocked by its frame policy.
-      const proxiedUrl = await window.cheddarProxyOpen(url);
+      let proxiedUrl;
+      try {
+        proxiedUrl = await proxyExternalUrl(url);
+      } catch (error) {
+        console.error("Could not start proxied browser navigation:", error);
+        const pane = paneEls[tab.id];
+        if (tab.kind === "browser" && pane) {
+          pane.querySelectorAll(".view").forEach(view => view.classList.remove("active"));
+          pane.querySelector("#view-notfound").classList.add("active");
+          pane.querySelector("[data-notfound-detail]").textContent =
+            "The browser proxy could not start. Please try again in a moment.";
+          tab.title = "Proxy unavailable";
+          renderTabStrip();
+        } else {
+          window.alert("The browser proxy could not start. Please try again in a moment.");
+        }
+        return;
+      }
 
       if (tab.kind === "app") {
         tab.src = proxiedUrl;
