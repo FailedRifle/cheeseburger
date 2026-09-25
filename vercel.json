@@ -1,20 +1,27 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "fluid": true,
-  "functions": { "api/wisp.js": { "maxDuration": 300 } },
+  "functions": { 
+    "api/wisp.js": { 
+      "maxDuration": 300 
+    } 
+  },
   "rewrites": [
     { "source": "/baremux/index.mjs", "destination": "/api/proxy-assets?asset=baremux-index" },
     { "source": "/baremux/worker.js", "destination": "/api/proxy-assets?asset=baremux-worker" },
     { "source": "/epoxy/index.mjs", "destination": "/api/proxy-assets?asset=epoxy-index" },
     { "source": "/wisp/", "destination": "/api/wisp" },
-    { "source": "/wisp/:path*", "destination": "/api/wisp" }
+    { "source": "/wisp/:path*", "destination": "/api/wisp" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ],
-  "headers": [{
-    "source": "/(.*)",
-    "headers": [
-      { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
-      { "key": "Cross-Origin-Embedder-Policy", "value": "require-corp" }
-      ,{ "key": "Service-Worker-Allowed", "value": "/" }
-    ]
-  }]
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Cross-Origin-Opener-Policy", "value": "same-origin-allow-popups" },
+        { "key": "Cross-Origin-Embedder-Policy", "value": "require-corp" },
+        { "key": "Service-Worker-Allowed", "value": "/" }
+      ]
+    }
+  ]
 }
