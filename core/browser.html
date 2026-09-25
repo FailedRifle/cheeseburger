@@ -567,7 +567,7 @@
     async function proxyExternalUrl(url) {
       // The browser is written into an about:blank popup, so load the router
       // explicitly on first navigation instead of racing its module script.
-      proxyRouterPromise ??= import("/proxy-assets/router.js?v=5");
+      proxyRouterPromise ??= import("/proxy-assets/router.js?v=6");
       await proxyRouterPromise;
       if (typeof window.cheddarProxyOpen !== "function") {
         throw new Error("The proxy router did not initialize.");
@@ -592,7 +592,7 @@
 
       if (dest.kind === "cheddar") {
         navigateBrowserTab(tab, dest.url);
-        return;
+        return true;
       }
 
       const url = dest.kind === "link" ? dest.url : `https://www.bing.com/search?q=${encodeURIComponent(dest.query)}`;
@@ -617,7 +617,7 @@
         } else {
           window.alert("The browser proxy could not start. Please try again in a moment.");
         }
-        return;
+        return false;
       }
 
       if (tab.kind === "app") {
@@ -627,21 +627,25 @@
         paneEls[tab.id].querySelector("iframe").src = proxiedUrl;
         if (tab.id === activeTabId) addressInput.value = addr;
         renderTabStrip();
-        return;
+        return true;
       }
 
       const newTab = makeAppTab(title, proxiedUrl, addr);
       tabs.push(newTab);
       buildPane(newTab);
       switchToTab(newTab.id);
+      return true;
     }
 
     function wireBrowserPane(tab, pane) {
       pane.querySelector('[data-app="games"]').addEventListener("click", () => openGamesTab());
       pane.querySelector('[data-home-search]').addEventListener("keydown", (e) => {
         if (e.key !== "Enter") return;
-        goToDestination(tab, e.target.value);
-        e.target.value = "";
+        const input = e.target;
+        const search = input.value;
+        goToDestination(tab, search).then((navigated) => {
+          if (navigated && input.isConnected) input.value = "";
+        });
       });
       renderChangelog(pane);
       renderFooter(pane);

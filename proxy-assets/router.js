@@ -1,3 +1,7 @@
+// The browser page does not include Ultraviolet's global scripts itself.
+// Load them before proxyUV reads the global config when a search is submitted.
+import "/proxy-assets/uv/uv.bundle.js";
+import "/proxy-assets/uv/uv.config.js";
 import {
   makeURL,
   proxySJ,
