@@ -92,10 +92,24 @@ export async function registerSW() {
     throw new Error("Your browser doesn't support service workers.");
   }
 
-  await navigator.serviceWorker.register(stockSW, { scope: "/" });
-  // Do not navigate an iframe until the worker is active; otherwise the
-  // first proxied document can bypass UV and be rejected by its frame policy.
+  const registration = await navigator.serviceWorker.register(stockSW, { scope: "/" });
+  // `ready` means the worker is active, but an already-open page can still be
+  // controlled by the previous worker (or no worker) until `controllerchange`.
+  // Wait before navigating an iframe, or the first proxy URL goes to Vercel as
+  // an ordinary static request and returns a 404.
   await navigator.serviceWorker.ready;
+  if (navigator.serviceWorker.controller !== registration.active) {
+    await new Promise((resolve) => {
+      const timeout = setTimeout(resolve, 5000);
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
+        clearTimeout(timeout);
+        resolve();
+      }, { once: true });
+    });
+  }
+  if (navigator.serviceWorker.controller !== registration.active) {
+    throw new Error("The proxy Service Worker is active but has not taken control of this page yet. Reload and try again.");
+  }
 }
 
 export async function ensureProxyReady() {
