@@ -28,7 +28,6 @@
     background: var(--bg); color: var(--text);
     font-family: var(--font); display: flex; flex-direction: column; overflow: hidden;
   }
-
   #header {
     display: flex; align-items: center;
     height: var(--header-h); min-height: var(--header-h);
@@ -42,9 +41,7 @@
   }
   #logo h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; color: var(--accent); line-height: 1; }
   #header-fill { flex: 1; }
-
   #body { display: flex; flex: 1; overflow: hidden; min-height: 0; }
-
   #sidebar {
     width: var(--sidebar-w); min-width: var(--sidebar-w);
     background: var(--sidebar-bg); border-right: 1px solid var(--border);
@@ -52,7 +49,6 @@
   }
   #sidebar::-webkit-scrollbar { width: 3px; }
   #sidebar::-webkit-scrollbar-thumb { background: var(--border); }
-
   .sidebar-section { margin-bottom: 2px; }
   #sidebar-home-btn {
     display: flex; align-items: center; gap: 8px;
@@ -86,16 +82,12 @@
   .sidebar-item.offline-item { color: var(--red); }
   .sidebar-item.offline-item .sidebar-item-icon { opacity: 0.6; }
   .sidebar-divider { height: 1px; background: var(--border); margin: 5px 0; }
-
   #main { flex: 1; overflow-y: auto; background: var(--bg); }
   #main::-webkit-scrollbar { width: 5px; }
   #main::-webkit-scrollbar-thumb { background: var(--border); }
-
   .page { display: none; padding: 18px 24px; }
   .page.active { display: block; }
-
   .section-label { font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
-
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-bottom: 20px; }
   .card {
     background: var(--panel-bg); border: 1px solid var(--border);
@@ -107,10 +99,7 @@
   .card .card-img img { width: 100%; height: 100%; object-fit: cover; }
   .card .no-img { font-size: 9px; color: var(--text-muted); }
   .card .card-label { padding: 6px 8px; font-size: 11px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
   .empty-note { font-size: 11px; color: var(--text-muted); margin-bottom: 20px; }
-
-  /* creator / about card */
   .creator-card {
     background: var(--panel-bg); border: 1px solid var(--border); border-radius: 6px;
     padding: 16px 18px; margin-bottom: 22px;
@@ -118,10 +107,8 @@
   .creator-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
   .creator-title .creator-name { color: var(--accent); }
   .creator-desc { font-size: 12px; color: var(--text-dim); line-height: 1.6; max-width: 640px; }
-
   #game-search { width: 100%; background: var(--panel-bg); border: 1px solid var(--border); color: var(--text); padding: 6px; border-radius: 4px; font-family: var(--font); font-size: 11px; outline: none; }
   #search-dropdown { display:none; position:absolute; top:100%; left:10px; right:10px; background: var(--sidebar-bg); border: 1px solid var(--border); border-top: none; z-index: 1000; max-height: 260px; overflow-y: auto; box-shadow: 0 6px 14px rgba(0,0,0,0.5); }
-
   #game-page { display: none; flex-direction: column; height: 100%; }
   #game-page.active { display: flex; }
   .game-banner {
@@ -152,7 +139,6 @@
   .game-desc-box strong { color: var(--text); }
   .game-desc-box hr { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
   .game-offline-notice { padding: 10px 14px; background: #200; border: 1px solid var(--red); border-radius: 4px; font-size: 12px; color: var(--red); max-width: 720px; }
-
   .playtime-badge {
     display:inline-flex; align-items:center; gap:6px; background: var(--card-bg);
     border: 1px solid var(--border); border-radius: 4px; padding: 4px 10px;
@@ -161,13 +147,11 @@
 </style>
 </head>
 <body>
-
 <div id="app">
   <div id="header">
     <div id="logo"><h1>CheddarOS Games</h1></div>
     <div id="header-fill"></div>
   </div>
-
   <div id="body">
     <div id="sidebar">
       <button id="sidebar-home-btn" onclick="showHome()"><span class="home-icon">⌂</span><span>Home</span></button>
@@ -175,36 +159,30 @@
         <input type="text" id="game-search" placeholder="Search games..." autocomplete="off">
         <div id="search-dropdown"></div>
       </div>
-
       <div class="sidebar-section" id="fav-section" style="display:none">
         <div class="sidebar-header fav-header">- FAVORITES</div>
         <div id="fav-sidebar"></div>
       </div>
       <div class="sidebar-divider" id="fav-divider" style="display:none"></div>
-
       <div class="sidebar-section">
         <div class="sidebar-header">- ALL GAMES</div>
         <div id="games-sidebar"></div>
       </div>
-
       <div class="sidebar-divider" id="offline-divider" style="display:none"></div>
       <div class="sidebar-section" id="offline-section" style="display:none">
         <div class="sidebar-header offline-header">- OFFLINE GAMES</div>
         <div id="offline-sidebar"></div>
       </div>
     </div>
-
     <div id="main">
       <div class="page active" id="page-home">
         <div class="creator-card">
           <div class="creator-title">Created by <span class="creator-name">CheddarOS</span></div>
           <div class="creator-desc">Browse the library and hit play — every game here runs instantly in your browser, no downloads or installs needed. Search for a title, star your favorites for quick access, and jump back in whenever you want.</div>
         </div>
-
         <div class="section-label">New Games</div>
         <div class="grid" id="new-grid"></div>
       </div>
-
       <div id="game-page">
         <div class="game-banner" id="game-banner"><div class="no-banner">No image</div></div>
         <div class="game-meta">
@@ -220,17 +198,7 @@
     </div>
   </div>
 </div>
-
 <script>
-/* ---------------------------------------------------------------------
-   Game catalog. Drop-in compatible with the old `sites` object format:
-   key -> { name, enabled, src }
-   Expects, for each game, files at:
-     /games/<src>/icon.png
-     /games/<src>/banner.png   (optional)
-     /games/<src>/desc.md      (optional, markdown)
-     /games/<src>/index.html   (the actual game)
---------------------------------------------------------------------- */
 const sites = {
   "fnac": { name: "Five Nights at Cheddar's", enabled: true, src: "fnac" },
   "brawl simulator 3d": { name: "Brawl Simulator 3D", enabled: true, src: "brawl-stars" },
@@ -287,15 +255,11 @@ const sites = {
   "bloons td5": { name: "Bloons Tower Defense 5", enabled: true, src: "bloons-td5" },
   "idle breakout": { name: "Idle Breakout", enabled: true, src: "idle-breakout" },
 };
-
 const getGameDir = () => `/core/games`;
-
 const FAVS_KEY = "library-favs";
 const PLAYTIME_KEY = "library-playtime";
-
 const getFavs = () => { try { return JSON.parse(localStorage.getItem(FAVS_KEY) || "[]"); } catch { return []; } };
 const setFavs = a => localStorage.setItem(FAVS_KEY, JSON.stringify(a));
-
 function getPlaytimeData() { try { return JSON.parse(localStorage.getItem(PLAYTIME_KEY) || "{}"); } catch { return {}; } }
 function savePlaytimeData(data) { localStorage.setItem(PLAYTIME_KEY, JSON.stringify(data)); }
 function getPlaytimeMins(key) { return getPlaytimeData()[key] || 0; }
@@ -310,7 +274,6 @@ function formatPlaytime(totalMins) {
   if (totalMins < 100) return `${Math.round(totalMins)} mins`;
   return `${(totalMins / 60).toFixed(1)} hrs`;
 }
-
 function toggleFav(key) {
   let f = getFavs();
   f = f.includes(key) ? f.filter(k => k !== key) : [...f, key];
@@ -324,8 +287,6 @@ function renderFavBtn(key) {
   btn.textContent = on ? "★" : "☆";
   btn.style.color = on ? "var(--yellow)" : "var(--text-dim)";
 }
-
-/* ---------------------- hover name (nickname <-> pretty) ------------- */
 function niceKey(key) {
   return key;
 }
@@ -337,8 +298,6 @@ function createHoverLabel(key, prettyName, className) {
   span.addEventListener("mouseleave", () => { span.textContent = niceKey(key); });
   return span;
 }
-
-/* ---------------------------- markdown -------------------------------- */
 function mdInline(s) {
   s = s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   s = s.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
@@ -365,8 +324,6 @@ function mdToHtml(md) {
   closeList();
   return html;
 }
-
-/* ------------------------------ sidebar ----------------------------- */
 function buildSidebar() {
   const gEl = document.getElementById("games-sidebar");
   gEl.innerHTML = "";
@@ -385,7 +342,6 @@ function buildSidebar() {
     gEl.appendChild(btn);
   });
 }
-
 function buildOfflineSidebar() {
   const offline = Object.entries(sites).filter(([, s]) => !s.enabled).sort((a, b) => a[0].localeCompare(b[0]));
   const sec = document.getElementById("offline-section");
@@ -409,7 +365,6 @@ function buildOfflineSidebar() {
     cont.appendChild(btn);
   });
 }
-
 function rebuildFavSidebar() {
   const favs = getFavs();
   const sec = document.getElementById("fav-section");
@@ -438,12 +393,9 @@ function rebuildFavSidebar() {
     cont.appendChild(btn);
   });
 }
-
-/* ------------------------------- grids ------------------------------ */
 function buildCard(key, s) {
   const c = document.createElement("div");
   c.className = "card";
-
   const imgWrap = document.createElement("div");
   imgWrap.className = "card-img";
   const img = document.createElement("img");
@@ -455,17 +407,14 @@ function buildCard(key, s) {
   img.onerror = () => { img.style.display = "none"; noImg.style.display = "flex"; };
   imgWrap.appendChild(img);
   imgWrap.appendChild(noImg);
-
   const label = document.createElement("div");
   label.className = "card-label";
   label.appendChild(createHoverLabel(key, s.name));
-
   c.appendChild(imgWrap);
   c.appendChild(label);
   c.onclick = () => showGame(key);
   return c;
 }
-
 function buildNewGrid() {
   const grid = document.getElementById("new-grid");
   grid.innerHTML = "";
@@ -473,8 +422,6 @@ function buildNewGrid() {
     grid.appendChild(buildCard(key, s));
   });
 }
-
-/* --------------------------- search dropdown ------------------------- */
 const searchInput = document.getElementById("game-search"), searchDropdown = document.getElementById("search-dropdown");
 searchInput.addEventListener("input", () => renderDropdown(searchInput.value.toLowerCase().trim()));
 function renderDropdown(q) {
@@ -499,14 +446,11 @@ function renderDropdown(q) {
 }
 function closeSearch() { searchInput.value = ""; searchDropdown.style.display = "none"; }
 document.addEventListener("click", e => { if (!e.target.closest("#sidebar")) closeSearch(); });
-
-/* ------------------------------ pages -------------------------------- */
 function showHome() {
   document.getElementById("page-home").classList.add("active");
   document.getElementById("game-page").classList.remove("active");
   document.querySelectorAll(".sidebar-item").forEach(b => b.classList.remove("active"));
 }
-
 function renderPlaytime(key) {
   const old = document.getElementById("playtime-badge");
   if (old) old.remove();
@@ -518,30 +462,22 @@ function renderPlaytime(key) {
   const area = document.getElementById("game-desc-area");
   if (area) area.prepend(badge);
 }
-
 async function showGame(key) {
   const s = sites[key];
   if (!s) return;
-
   document.getElementById("page-home").classList.remove("active");
   document.getElementById("game-page").classList.add("active");
   document.querySelectorAll(".sidebar-item").forEach(b => b.classList.toggle("active", b.dataset.key === key));
-
   const bannerEl = document.getElementById("game-banner");
   bannerEl.innerHTML = `<img src="${getGameDir()}/${s.src}/banner.png" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt=""><div class="no-banner" style="display:none">No image</div>`;
-
   const ico = document.getElementById("game-icon-sm");
   ico.src = `${getGameDir()}/${s.src}/icon.png`; ico.style.display = "";
   const nameBar = document.getElementById("game-name-bar");
-  nameBar.innerHTML = "";
-  nameBar.appendChild(createHoverLabel(key, s.name));
-
+  nameBar.textContent = s.name;
   renderFavBtn(key);
   document.getElementById("game-fav-btn").onclick = () => toggleFav(key);
-
   const descArea = document.getElementById("game-desc-area");
   const playBtn = document.getElementById("game-play-btn");
-
   if (!s.enabled) {
     descArea.innerHTML = `<div class="game-offline-notice">'${s.name}' is not currently available.</div>`;
     playBtn.disabled = true; playBtn.style.opacity = "0.4";
@@ -559,14 +495,15 @@ async function showGame(key) {
   }
   playBtn.onclick = s.enabled ? () => launchGame(key) : null;
 }
-
 function launchGame(key) {
   const s = sites[key];
-  const url = `${getGameDir()}/${s.src}/index.html`;
-
-  const win = window.open(url, "_blank");
+  const gameUrl = `${getGameDir()}/${s.src}/index.html`;
+  const win = window.open(`about:blank#cheddar/games/${s.src}`, "_blank");
+  if (!win) return;
+  win.document.open();
+  win.document.write(`<!DOCTYPE html><html><head><title>${s.name}</title><style>html,body{margin:0;height:100%;overflow:hidden;background:#000}</style></head><body><iframe src="${gameUrl}" style="border:0;width:100%;height:100%" allowfullscreen></iframe></body></html>`);
+  win.document.close();
   const startTime = Date.now();
-
   const liveUpdateInterval = setInterval(() => {
     const elapsedMins = (Date.now() - startTime) / 60000;
     const badge = document.getElementById("playtime-badge");
@@ -575,7 +512,6 @@ function launchGame(key) {
     const strong = badge.querySelector("strong");
     if (strong) strong.textContent = formatPlaytime(total);
   }, 30000);
-
   const pollInterval = setInterval(() => {
     if (!win || win.closed) {
       clearInterval(pollInterval);
@@ -587,7 +523,6 @@ function launchGame(key) {
     }
   }, 2000);
 }
-
 (function init() {
   buildSidebar();
   buildOfflineSidebar();
