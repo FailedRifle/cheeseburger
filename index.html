@@ -51,24 +51,10 @@
         }
 
         if (isPWA && installable) {
-            fetch('core/browser.html')
-                .then(response => {
-                    if (!response.ok) throw new Error();
-                    return response.text();
-                })
-                .then(htmlContent => {
-                    const newWindow = window.open('about:blank#cheddar', '_blank', 'width=800,height=600,toolbar=no,menubar=no,scrollbars=yes,resizable=yes');
-                    if (newWindow) {
-                        newWindow.document.write(htmlContent);
-                        newWindow.document.close();
-                        window.close();
-                    } else {
-                        document.body.textContent = "Popup blocked - please allow popups for this site.";
-                    }
-                })
-                .catch(() => {
-                    document.body.textContent = "Error loading core/browser.html";
-                });
+            // Load the browser on its real origin URL. Writing the page into an
+            // about:blank popup gives it an opaque origin, which prevents its
+            // Service Worker from registering.
+            window.location.replace(new URL('core/browser.html', window.location.href).href);
         } else if (installable) {
             const btn = document.getElementById('install-btn');
             
