@@ -28,7 +28,11 @@ async function handleRequest(event) {
   }
 
   await scramjet.loadConfig();
-  if (scramjet.route(event)) return scramjet.fetch(event);
+  // Scramjet only receives its configuration when the browser explicitly
+  // initializes that proxy. Until then, loadConfig() leaves config unset and
+  // route() cannot safely inspect a prefix. Let ordinary site requests pass
+  // through so a newly registered worker does not break the browser itself.
+  if (scramjet.config && scramjet.route(event)) return scramjet.fetch(event);
 
   return await fetch(event.request);
 }
