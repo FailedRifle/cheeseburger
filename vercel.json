@@ -11,15 +11,14 @@
     { "source": "/baremux/worker.js", "destination": "/api/proxy-assets?asset=baremux-worker" },
     { "source": "/epoxy/index.mjs", "destination": "/api/proxy-assets?asset=epoxy-index" },
     { "source": "/wisp/", "destination": "/api/wisp" },
-    { "source": "/wisp/:path*", "destination": "/api/wisp" },
-    { "source": "/((?!api/|loader/|core/).*)", "destination": "/index.html" }
+    { "source": "/wisp/:path*", "destination": "/api/wisp" }
   ],
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
         { "key": "Cross-Origin-Opener-Policy", "value": "same-origin-allow-popups" },
-        { "key": "Cross-Origin-Resource-Policy", "value": "cross-origin" },
+        { "key": "Cross-Origin-Embedder-Policy", "value": "require-corp" },
         { "key": "Service-Worker-Allowed", "value": "/" }
       ]
     }
