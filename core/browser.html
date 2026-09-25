@@ -567,7 +567,7 @@
     async function proxyExternalUrl(url) {
       // The browser is written into an about:blank popup, so load the router
       // explicitly on first navigation instead of racing its module script.
-      proxyRouterPromise ??= import("/proxy-assets/router.js?v=6");
+      proxyRouterPromise ??= import("/proxy-assets/router.js?v=7");
       await proxyRouterPromise;
       if (typeof window.cheddarProxyOpen !== "function") {
         throw new Error("The proxy router did not initialize.");
