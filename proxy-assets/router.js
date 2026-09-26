@@ -45,6 +45,15 @@ window.cheddarProxyOpen = async (input) => {
   }
 };
 
+// UV creates its proxy URL before the upstream page is fetched, so network
+// failures happen after cheddarProxyOpen has returned. Expose an explicit
+// Scramjet retry for the browser shell to use when UV renders its error page.
+window.cheddarProxyFallback = async (input) => {
+  await prepareProxy();
+  await ensureProxyReady();
+  return proxySJ(makeURL(input));
+};
+
 window.addEventListener("load", () => {
   prepareProxy().catch((error) => console.warn("Proxy startup deferred", error));
 });

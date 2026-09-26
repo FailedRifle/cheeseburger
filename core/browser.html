@@ -632,7 +632,7 @@
 
     let proxyRouterPromise;
     async function proxyExternalUrl(url) {
-      proxyRouterPromise ??= import("/proxy-assets/router.js?v=9");
+      proxyRouterPromise ??= import("/proxy-assets/router.js?v=10");
       await proxyRouterPromise;
       if (typeof window.cheddarProxyOpen !== "function") {
         throw new Error("The proxy router did not initialize.");
@@ -724,6 +724,32 @@
         frame.title = title || "Proxied page";
         pane.appendChild(frame);
       }
+      const requestId = (tab.proxyRequestId || 0) + 1;
+      tab.proxyRequestId = requestId;
+      const configuredBackend = localStorage.getItem("proxy-backend");
+      const legacyBackend = localStorage.getItem("proxyType");
+      const uvSelected = configuredBackend !== "scramjet" && legacyBackend !== "SJ";
+      tab.proxyFallbackTried = false;
+      frame.onload = async () => {
+        if (tab.proxyRequestId !== requestId || !uvSelected || tab.proxyFallbackTried) return;
+        try {
+          const errorTitle = frame.contentDocument?.querySelector("#errorTitle")?.textContent?.trim();
+          if (errorTitle !== "Error processing your request") return;
+        } catch {
+          return;
+        }
+
+        tab.proxyFallbackTried = true;
+        try {
+          if (typeof window.cheddarProxyFallback !== "function") {
+            throw new Error("Scramjet fallback is unavailable.");
+          }
+          const fallbackUrl = await window.cheddarProxyFallback(url);
+          if (tab.proxyRequestId === requestId) frame.src = fallbackUrl;
+        } catch (error) {
+          console.error("Scramjet could not recover the failed UV request:", error);
+        }
+      };
       frame.style.display = "block";
       frame.src = proxiedUrl;
       tab.proxyUrl = proxiedUrl;
@@ -772,7 +798,7 @@
         status.textContent = "Applying transport…";
         transport.disabled = true;
         try {
-          proxyRouterPromise ??= import("/proxy-assets/router.js?v=9");
+          proxyRouterPromise ??= import("/proxy-assets/router.js?v=10");
           const router = await proxyRouterPromise;
           await router.configureTransport(requested);
           status.textContent = `Transport active: ${requested === "bare" ? "Bare Server" : requested}.`;
