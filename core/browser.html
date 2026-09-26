@@ -6,330 +6,582 @@
   <title>CheddarOS</title>
   <link rel="icon" id="app-window-favicon" href="/loader/favicon.png" type="image/png">
   <style>
-    * { box-sizing: border-box; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
-      --bg-app: #131415;
-      --bg-surface: #191a1c;
-      --bg-elevated: #222325;
-      --bg-elevated-2: #2b2c2f;
-      --border: #2d2e31;
-      --border-soft: #1e1f21;
-      --text: #e8eaed;
-      --text-dim: #9aa0a6;
-      --text-faint: #6b6e73;
-      --accent: #eab23d;
-      --accent-strong: #f5c563;
+      --bg: #121212;
+      --sidebar-bg: #0f0f0f;
+      --panel-bg: #1a1a1a;
+      --card-bg: #1e1e1e;
+      --border: #333333;
+      --border-hover: #555555;
+      --text: #e0e0e0;
+      --text-dim: #999999;
+      --text-muted: #676767;
+      --accent: #ffffff;
+      --red: #ff5252;
+      --green: #4caf50;
+      --yellow: #ffd700;
+      --notice-bg: #1c1c1c;
+      --notice-border: #ffffff;
+      --notice-text: #ffffff;
+      --font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --mono: monospace;
     }
     html, body {
       height: 100%;
       margin: 0;
-      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-      background-color: var(--bg-app);
+      font-family: var(--font);
+      background-color: var(--bg);
       color: var(--text);
+      overflow: hidden;
     }
-
     .browser {
       height: 100vh;
       width: 100vw;
       display: flex;
       flex-direction: column;
-      background: var(--bg-app);
+      background: var(--bg);
     }
-
     .tab-strip {
       display: flex;
       align-items: flex-end;
       gap: 2px;
-      background: var(--bg-app);
-      padding: 8px 8px 0;
+      background: var(--sidebar-bg);
+      padding: 6px 8px 0;
       overflow-x: auto;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
     }
+    .tab-strip::-webkit-scrollbar { height: 3px; }
+    .tab-strip::-webkit-scrollbar-thumb { background: var(--border); }
     .tab {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 9px 12px;
-      background: var(--bg-app);
-      border-radius: 8px 8px 0 0;
-      font-size: 13px;
+      gap: 7px;
+      padding: 8px 12px;
+      background: var(--sidebar-bg);
+      border: 1px solid transparent;
+      border-bottom: none;
+      border-radius: 4px 4px 0 0;
+      font-size: 12px;
+      font-weight: 500;
       color: var(--text-dim);
       max-width: 200px;
       cursor: pointer;
       flex-shrink: 0;
       position: relative;
-      transition: background 0.1s ease;
+      transition: background 0.1s, color 0.1s;
     }
-    .tab:hover { background: var(--bg-surface); }
-    .tab.active { background: var(--bg-surface); color: var(--text); }
+    .tab:hover { background: var(--panel-bg); color: var(--text); }
+    .tab.active {
+      background: var(--panel-bg);
+      color: var(--accent);
+      font-weight: 600;
+      border-color: var(--border);
+    }
     .tab.active::after {
       content: "";
       position: absolute;
-      left: 0; right: 0; top: 0;
+      left: 0; right: 0; bottom: -1px;
       height: 2px;
-      border-radius: 8px 8px 0 0;
       background: var(--accent);
     }
-    .tab .favicon { width: 16px; height: 16px; border-radius: 3px; object-fit: contain; flex-shrink: 0; }
-    .tab .title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tab .favicon {
+      width: 14px; height: 14px;
+      border-radius: 2px;
+      object-fit: contain;
+      flex-shrink: 0;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+    }
+    .tab .title {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
+    }
     .tab .close {
-      display: flex; align-items: center; justify-content: center;
-      width: 18px; height: 18px;
-      color: var(--text-faint); font-size: 14px; line-height: 1;
-      border-radius: 4px; flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px; height: 16px;
+      color: var(--text-muted);
+      font-size: 13px;
+      line-height: 1;
+      border-radius: 3px;
+      flex-shrink: 0;
+      transition: color 0.1s, background 0.1s;
     }
-    .tab .close:hover { color: var(--text); background: var(--bg-elevated-2); }
+    .tab .close:hover {
+      color: var(--accent);
+      background: var(--card-bg);
+    }
     .tab-new {
-      display: flex; align-items: center; justify-content: center;
-      width: 30px; height: 30px;
-      color: var(--text-faint); flex-shrink: 0; cursor: pointer;
-      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px; height: 28px;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      cursor: pointer;
+      border-radius: 4px;
+      font-size: 16px;
+      transition: color 0.1s, background 0.1s;
     }
-    .tab-new:hover { color: var(--text); background: var(--bg-surface); }
-
+    .tab-new:hover {
+      color: var(--accent);
+      background: var(--panel-bg);
+    }
     .toolbar {
       display: flex;
       align-items: center;
-      gap: 6px;
-      padding: 8px 12px;
-      background: var(--bg-surface);
-      border-bottom: 1px solid var(--border-soft);
+      gap: 4px;
+      padding: 6px 10px;
+      background: var(--panel-bg);
+      border-bottom: 1px solid var(--border);
       position: relative;
+      flex-shrink: 0;
     }
     .nav-btn {
-      width: 30px;
-      height: 30px;
+      width: 28px;
+      height: 28px;
       display: flex;
       align-items: center;
       justify-content: center;
       background: transparent;
-      border-radius: 50%;
+      border: 1px solid transparent;
+      border-radius: 4px;
       color: var(--text-dim);
       flex-shrink: 0;
       user-select: none;
+      cursor: pointer;
+      transition: background 0.1s, color 0.1s, border-color 0.1s;
     }
-    .nav-btn:hover { background: var(--bg-elevated-2); color: var(--text); }
-    .nav-btn.disabled { opacity: 0.35; pointer-events: none; }
-    .nav-btn svg { width: 17px; height: 17px; }
+    .nav-btn:hover {
+      background: var(--card-bg);
+      color: var(--accent);
+      border-color: var(--border);
+    }
+    .nav-btn.disabled {
+      opacity: 0.35;
+      pointer-events: none;
+    }
+    .nav-btn svg { width: 15px; height: 15px; }
     .address-bar {
       flex: 1;
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 7px 14px;
+      padding: 6px 12px;
       margin: 0 4px;
-      background: var(--bg-elevated);
-      border: 1px solid transparent;
-      border-radius: 20px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
       color: var(--text-dim);
-      transition: border-color 0.1s ease;
+      transition: border-color 0.15s;
     }
-    .address-bar:focus-within { border-color: var(--accent); }
-    .address-bar .lock { display: flex; color: #7fbf7f; flex-shrink: 0; }
-    .address-bar .lock svg { width: 13px; height: 13px; }
+    .address-bar:focus-within { border-color: var(--border-hover); }
+    .address-bar .lock {
+      display: flex;
+      color: var(--green);
+      flex-shrink: 0;
+    }
+    .address-bar .lock svg { width: 12px; height: 12px; }
     .address-bar input {
       flex: 1;
       background: transparent;
       border: none;
       outline: none;
       color: var(--text);
-      font-size: 13px;
-      font-family: inherit;
+      font-size: 12px;
+      font-family: var(--mono);
     }
     .toolbar-icon {
-      width: 30px;
-      height: 30px;
+      width: 28px;
+      height: 28px;
       display: flex;
       align-items: center;
       justify-content: center;
       color: var(--text-dim);
       flex-shrink: 0;
       user-select: none;
-      border-radius: 50%;
+      border-radius: 4px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: background 0.1s, color 0.1s, border-color 0.1s;
     }
-    .toolbar-icon svg { width: 16px; height: 16px; }
-    .toolbar-icon:hover { color: var(--text); background: var(--bg-elevated-2); }
-
+    .toolbar-icon svg { width: 14px; height: 14px; }
+    .toolbar-icon:hover {
+      color: var(--accent);
+      background: var(--card-bg);
+      border-color: var(--border);
+    }
     .bookmarks-bar {
       display: flex;
-      gap: 4px;
+      gap: 2px;
       padding: 4px 10px;
-      background: var(--bg-surface);
-      border-bottom: 1px solid var(--border-soft);
-      font-size: 12px;
+      background: var(--panel-bg);
+      border-bottom: 1px solid var(--border);
+      font-size: 11px;
       color: var(--text-dim);
+      flex-shrink: 0;
     }
     .bookmark {
-      padding: 5px 10px;
-      border-radius: 6px;
+      padding: 4px 10px;
+      border-radius: 4px;
       cursor: default;
+      font-weight: 500;
+      transition: background 0.1s, color 0.1s;
     }
     .bookmark.is-link { cursor: pointer; }
-    .bookmark.is-link:hover { background: var(--bg-elevated-2); color: var(--text); }
-
+    .bookmark.is-link:hover {
+      background: var(--card-bg);
+      color: var(--accent);
+    }
     .viewport {
       flex: 1;
-      background: var(--bg-app);
+      background: var(--bg);
       overflow-y: auto;
       overflow-x: hidden;
       position: relative;
+      min-height: 0;
     }
-    .pane { display: none; height: 100%; width: 100%; align-items: stretch; }
+    .viewport::-webkit-scrollbar { width: 5px; }
+    .viewport::-webkit-scrollbar-thumb { background: var(--border); }
+    .pane {
+      display: none;
+      height: 100%;
+      width: 100%;
+      align-items: stretch;
+    }
     .pane.active { display: flex; }
     .pane iframe {
       width: 100%;
       height: 100%;
       border: none;
-      background: var(--bg-app);
+      background: var(--bg);
     }
-
-    .view { display: none; height: 100%; width: 100%; }
+    .view {
+      display: none;
+      height: 100%;
+      width: 100%;
+    }
     .view.active { display: flex; flex: 1; }
-
-    #view-home { align-items: center; justify-content: center; position: relative; }
+    #view-home {
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      flex-direction: column;
+    }
     .announcement-banner {
       width: 100%;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
-      background: #7a1245;
-      border-bottom: 3px solid #e0308c;
-      color: #fff;
-      font-family: inherit;
+      gap: 8px;
+      background: var(--notice-bg);
+      border-bottom: 1px solid var(--notice-border);
+      border-top: 1px solid var(--notice-border);
+      color: var(--notice-text);
+      font-family: var(--mono);
       font-weight: 600;
-      font-size: 13px;
-      letter-spacing: 0.1px;
+      font-size: 11px;
+      letter-spacing: 0.3px;
       text-align: center;
-      padding: 10px 16px;
+      padding: 5px 16px;
       flex-shrink: 0;
     }
-    .announcement-banner svg { width: 15px; height: 15px; flex-shrink: 0; }
+    .announcement-banner svg {
+      width: 13px;
+      height: 13px;
+      flex-shrink: 0;
+    }
     .homepage {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 22px;
-      padding: 20px;
+      gap: 20px;
+      padding: 24px;
       width: 100%;
       max-width: 680px;
       margin: 0 auto;
       box-sizing: border-box;
     }
-    .logo-group { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-    .logo { font-size: 44px; font-weight: 600; letter-spacing: -0.5px; color: var(--text); line-height: 1; }
+    .logo-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    .logo {
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: var(--accent);
+      line-height: 1;
+    }
     .logo span { color: var(--accent); }
-    .version-tag { font-size: 11px; color: var(--text-faint); }
+    .version-tag {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-family: var(--mono);
+    }
     .search-box {
       display: flex;
       align-items: center;
-      gap: 12px;
-      width: 560px;
-      max-width: 80vw;
-      padding: 12px 20px;
-      background: var(--bg-elevated);
+      gap: 10px;
+      width: 520px;
+      max-width: 85vw;
+      padding: 10px 16px;
+      background: var(--panel-bg);
       border: 1px solid var(--border);
-      border-radius: 24px;
+      border-radius: 4px;
       color: var(--text-dim);
-      font-size: 14px;
-      transition: border-color 0.1s ease, box-shadow 0.1s ease;
+      font-size: 13px;
+      transition: border-color 0.15s;
     }
-    .search-box:hover { border-color: #4d4e52; box-shadow: 0 1px 6px rgba(0,0,0,0.3); }
-    .search-box:focus-within { border-color: var(--accent); box-shadow: 0 1px 6px rgba(0,0,0,0.3); }
-    .search-box .search-icon { display: flex; color: var(--text-faint); flex-shrink: 0; }
-    .search-box .search-icon svg { width: 16px; height: 16px; }
+    .search-box:hover { border-color: var(--border-hover); }
+    .search-box:focus-within { border-color: var(--border-hover); }
+    .search-box .search-icon {
+      display: flex;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+    .search-box .search-icon svg { width: 14px; height: 14px; }
     .search-box input {
       flex: 1;
       background: transparent;
       border: none;
       outline: none;
       color: var(--text);
-      font-size: 14px;
-      font-family: inherit;
+      font-size: 13px;
+      font-family: var(--font);
     }
-    .search-box input::placeholder { color: var(--text-dim); }
-
+    .search-box input::placeholder { color: var(--text-muted); }
     .apps-section {
       width: 100%;
       max-width: 640px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 14px;
+      gap: 12px;
     }
-    .apps-label { font-size: 12px; color: var(--text-faint); }
-    .apps-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 26px; }
-    .app { display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; width: 64px; }
+    .apps-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      font-family: var(--mono);
+    }
+    .apps-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+    }
+    .app {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 7px;
+      cursor: pointer;
+      width: 64px;
+    }
     .app .app-icon {
-      width: 52px; height: 52px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 22px; background: var(--bg-elevated);
+      width: 48px;
+      height: 48px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      background: var(--panel-bg);
       border: 1px solid var(--border);
-      transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+      transition: border-color 0.15s, background 0.15s;
     }
-    .app:hover .app-icon { background: var(--bg-elevated-2); border-color: var(--accent); transform: scale(1.05); }
-    .app .app-label { font-size: 11px; color: var(--text-dim); text-align: center; }
-
+    .app:hover .app-icon {
+      background: var(--card-bg);
+      border-color: var(--border-hover);
+    }
+    .app .app-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-align: center;
+    }
     .site-footer {
       position: absolute;
       left: 0;
       right: 0;
-      bottom: 18px;
-      font-size: 11px;
-      color: var(--text-faint);
+      bottom: 16px;
+      font-size: 10px;
+      color: var(--text-muted);
       text-align: center;
+      font-family: var(--mono);
     }
-
-    #view-settings { align-items: flex-start; justify-content: flex-start; }
-    .page { width: 100%; padding: 28px 48px; }
-    .page h2 { font-size: 19px; color: var(--text); margin: 0 0 22px; font-weight: 600; }
-    .empty-note { color: var(--text-faint); font-size: 14px; }
-    .settings-list { width: min(680px, 100%); display: flex; flex-direction: column; gap: 12px; }
+    #view-settings {
+      align-items: flex-start;
+      justify-content: flex-start;
+    }
+    .page {
+      width: 100%;
+      padding: 18px 24px;
+    }
+    .page h2 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--accent);
+      margin: 0 0 16px;
+    }
+    .empty-note {
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+    .settings-list {
+      width: min(680px, 100%);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
     .settings-section-title {
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      color: var(--text-faint);
-      margin: 4px 0 -4px;
+      background: var(--panel-bg);
+      border: 1px solid var(--border);
+      display: inline-block;
+      padding: 4px 14px;
+      margin-bottom: 4px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 0.5px;
+      border-radius: 4px;
     }
-    .settings-group { border: 1px solid var(--border); border-radius: 10px; background: var(--bg-surface); overflow: hidden; }
-    .setting-card { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 16px 18px; border-bottom: 1px solid var(--border-soft); }
+    .settings-group {
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: var(--panel-bg);
+      overflow: hidden;
+    }
+    .setting-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel-bg);
+    }
     .settings-group .setting-card:last-child { border-bottom: none; }
-    .setting-copy { display: flex; flex-direction: column; gap: 5px; }
-    .setting-title { color: var(--text); font-size: 14px; font-weight: 600; }
-    .setting-description, .setting-status { color: var(--text-faint); font-size: 12px; line-height: 1.4; }
-    .setting-card select { min-width: 210px; padding: 9px 32px 9px 11px; color: var(--text); background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 7px; font: inherit; }
-    .setting-card .setting-action { min-width: 210px; padding: 9px 11px; color: var(--text); background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 7px; font: inherit; cursor: pointer; }
-    .setting-status { min-height: 17px; margin: 4px 0 0; padding: 0 18px; }
-    @media (max-width: 620px) { .page { padding: 24px 18px; } .setting-card { align-items: stretch; flex-direction: column; gap: 12px; } .setting-card select { width: 100%; } }
-
-    #view-changelog { align-items: flex-start; justify-content: flex-start; }
-    .changelog-page { max-width: 720px; }
-    .changelog-list { display: flex; flex-direction: column; gap: 16px; }
-    .changelog-entry {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-soft);
-      border-radius: 10px;
-      padding: 16px 20px;
+    .setting-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
     }
+    .setting-title {
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .setting-description,
+    .setting-status {
+      color: var(--text-dim);
+      font-size: 10px;
+      line-height: 1.5;
+    }
+    .setting-card select {
+      min-width: 200px;
+      padding: 6px 10px;
+      color: var(--text);
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: var(--mono);
+      font-size: 11px;
+      cursor: pointer;
+      outline: none;
+    }
+    .setting-card select:focus { border-color: var(--border-hover); }
+    .setting-card select option { background: var(--card-bg); }
+    .setting-card .setting-action {
+      min-width: 200px;
+      padding: 7px 12px;
+      color: var(--accent);
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: var(--font);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .setting-card .setting-action:hover { border-color: var(--border-hover); }
+    .setting-status {
+      min-height: 16px;
+      margin: 2px 0 0;
+      padding: 0 4px;
+      font-family: var(--mono);
+    }
+    @media (max-width: 620px) {
+      .page { padding: 14px 16px; }
+      .setting-card {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .setting-card select,
+      .setting-card .setting-action { width: 100%; min-width: 0; }
+    }
+    #view-changelog {
+      align-items: flex-start;
+      justify-content: flex-start;
+    }
+    .changelog-page { max-width: 720px; }
+    .changelog-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    .changelog-entry {
+      border-bottom: 1px solid var(--border);
+      padding: 12px 0;
+    }
+    .changelog-entry:first-child { padding-top: 0; }
     .changelog-entry-header {
       display: flex;
       align-items: baseline;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 10px;
+      gap: 8px;
+      margin-bottom: 6px;
     }
-    .changelog-ver { font-size: 14px; font-weight: 600; color: var(--text); }
-    .changelog-date { font-size: 12px; color: var(--text-faint); white-space: nowrap; }
-    .changelog-items { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 5px; }
-    .changelog-items li { font-size: 13px; color: var(--text-dim); line-height: 1.45; }
+    .changelog-ver {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--accent);
+      font-family: var(--mono);
+    }
+    .changelog-date {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+    .changelog-items {
+      margin: 0;
+      padding-left: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .changelog-items li {
+      font-size: 11px;
+      color: var(--text-dim);
+      line-height: 1.65;
+    }
   </style>
 </head>
 <body>
   <div class="browser">
     <div class="announcement-banner" id="global-announcement" style="display:none;"></div>
     <div class="tab-strip" id="tab-strip"></div>
-
     <div class="toolbar">
       <div class="nav-btn" id="back-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg></div>
       <div class="nav-btn" id="fwd-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></div>
@@ -342,16 +594,13 @@
       <div class="toolbar-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.1 8.6 22 9.3 17 14.1 18.2 21 12 17.6 5.8 21 7 14.1 2 9.3 8.9 8.6 12 2"></polygon></svg></div>
       <div class="toolbar-icon" id="settings-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.04 1.56V21a2 2 0 0 1-4 0v-.09A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.56-1.04H3a2 2 0 0 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1.04-1.56V3a2 2 0 0 1 4 0v.09A1.7 1.7 0 0 0 15 4.6a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.56 1.04H21a2 2 0 0 1 0 4h-.09A1.7 1.7 0 0 0 19.4 15z"></path></svg></div>
     </div>
-
     <div class="bookmarks-bar">
       <span class="bookmark">Cheddar</span>
       <span class="bookmark">On top</span>
       <span class="bookmark is-link" id="bookmark-changelog">Change logs</span>
     </div>
-
     <div class="viewport" id="viewport"></div>
   </div>
-
   <template id="browser-pane-template">
     <div class="view active" id="view-home">
       <div class="homepage">
@@ -372,7 +621,6 @@
       </div>
       <div class="site-footer" data-footer></div>
     </div>
-
     <div class="view" id="view-settings">
       <div class="page">
         <h2>Settings</h2>
@@ -438,14 +686,12 @@
         </div>
       </div>
     </div>
-
     <div class="view" id="view-notfound">
       <div class="page">
         <h2>This page can't be reached</h2>
         <div class="empty-note" data-notfound-detail></div>
       </div>
     </div>
-
     <div class="view" id="view-changelog">
       <div class="page changelog-page">
         <h2>Change Logs</h2>
@@ -453,12 +699,10 @@
       </div>
     </div>
   </template>
-
   <script>
     
     const ANNOUNCEMENT_TEXT = "CheddarOS is currently in Alpha — expect bugs.";
     const OS_VERSION = "v1.0.0";
-
     let changelogDataPromise = null;
     function loadChangelogData() {
       if (!changelogDataPromise) {
@@ -475,13 +719,11 @@
       }
       return changelogDataPromise;
     }
-
     function escapeHtml(str) {
       const div = document.createElement("div");
       div.textContent = str;
       return div.innerHTML;
     }
-
     function renderChangelog(pane) {
       const list = pane.querySelector("[data-changelog-list]");
       list.innerHTML = `<div class="empty-note">Loading change log…</div>`;
@@ -508,7 +750,6 @@
         `).join("");
       });
     }
-
     let nextTabId = 1;
     let tabs = [];
     let activeTabId = null;
@@ -522,7 +763,6 @@
       gmail: { title: "Gmail", icon: "/core/images/cloakicons/gmail.ico", type: "image/x-icon" },
       slides: { title: "Google Slides", icon: "/core/images/cloakicons/slides.ico", type: "image/x-icon" },
     };
-
     function applyAppCloak(value = localStorage.getItem("cheddar-app-cloak") || "default") {
       const cloak = appCloaks[value] ? value : "default";
       const preset = appCloaks[cloak];
@@ -550,27 +790,23 @@
       }
       return cloak;
     }
-
     function savedLaunchMode() {
       const modes = ["window", "chrome-tab", "normal-tab", "cheddar-tab"];
       const saved = localStorage.getItem("cheddar-app-launch-mode");
       return modes.includes(saved) ? saved : "window";
     }
-
     const searchEngines = {
       "https://duckduckgo.com/?q=%s": "DuckDuckGo",
       "https://www.google.com/search?q=%s": "Google",
       "https://search.brave.com/search?q=%s": "Brave",
       "https://www.bing.com/search?q=%s": "Bing",
     };
-
     function selectedSearchEngine() {
       const value = localStorage.getItem("searchEngine");
       if (Object.hasOwn(searchEngines, value)) return value;
       localStorage.setItem("searchEngine", "https://duckduckgo.com/?q=%s");
       return "https://duckduckgo.com/?q=%s";
     }
-
     function faviconForUrl(url) {
       if (!url || /^cheddar:\/\//i.test(url)) return cheddarFavicon;
       try {
@@ -581,14 +817,12 @@
         return cheddarFavicon;
       }
     }
-
     function gameArtworkUrl(url) {
       return String(url || "").replace(
         /^https:\/\/cdn\.jsdelivr\.net\/gh\/gn-math\/covers@main\//i,
         "https://raw.githubusercontent.com/gn-math/covers/main/",
       );
     }
-
     function makeBrowserTab() {
       const id = nextTabId++;
       return {
@@ -600,21 +834,17 @@
         historyIndex: 0,
       };
     }
-
     function makeAppTab(title, src, addr, faviconUrl = addr) {
       const id = nextTabId++;
       return { id, kind: "app", title, src, addr, favicon: faviconForUrl(faviconUrl) };
     }
-
     function currentTab() {
       return tabs.find(t => t.id === activeTabId);
     }
-
     const tabStrip = document.querySelector("#tab-strip");
     const viewport = document.querySelector("#viewport");
     const addressInput = document.querySelector("#address-input");
     const paneEls = {};
-
     function renderTabStrip() {
       tabStrip.innerHTML = "";
       tabs.forEach(tab => {
@@ -653,12 +883,10 @@
       });
       tabStrip.appendChild(newBtn);
     }
-
     function buildPane(tab) {
       const pane = document.createElement("div");
       pane.className = "pane";
       pane.id = "pane-" + tab.id;
-
       if (tab.kind === "browser") {
         const tpl = document.querySelector("#browser-pane-template");
         pane.appendChild(tpl.content.cloneNode(true));
@@ -668,11 +896,9 @@
         iframe.src = tab.src;
         pane.appendChild(iframe);
       }
-
       viewport.appendChild(pane);
       paneEls[tab.id] = pane;
     }
-
     function renderAnnouncement() {
       const el = document.querySelector("#global-announcement");
       if (!ANNOUNCEMENT_TEXT) {
@@ -683,38 +909,31 @@
       el.style.display = "flex";
       el.innerHTML = `
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-        <span>${escapeHtml(`Notice: ${ANNOUNCEMENT_TEXT}`)}</span>
+        <span>${escapeHtml(`[NOTICE] ${ANNOUNCEMENT_TEXT}`)}</span>
       `;
     }
-
     function renderFooter(pane) {
       const el = pane.querySelector("[data-footer]");
       if (!el) return;
       el.textContent = `CheddarOS™ — Protected by U.S. Copyright and DMCA.`;
     }
-
     function renderVersion(pane) {
       const el = pane.querySelector("[data-version]");
       if (!el) return;
       el.textContent = OS_VERSION;
     }
-
     const domainPattern = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+(:\d+)?(\/\S*)?$/i;
-
     function isCheddarCommand(value) {
       return /^cheddar:\/\//i.test(value);
     }
-
     function looksLikeAddress(value) {
       if (/^https?:\/\//i.test(value)) return true;
       if (/\s/.test(value)) return false;
       return domainPattern.test(value);
     }
-
     function toAbsoluteUrl(value) {
       return /^https?:\/\//i.test(value) ? value : `https://${value}`;
     }
-
     let proxyRouterPromise;
     async function proxyExternalUrl(url) {
       proxyRouterPromise ??= import("/proxy-assets/router.js?v=11");
@@ -724,7 +943,6 @@
       }
       return window.cheddarProxyOpen(url);
     }
-
     function omniboxDestination(raw) {
       const value = raw.trim();
       if (!value) return null;
@@ -735,11 +953,9 @@
       }
       return { kind: "search", query: value };
     }
-
     async function goToDestination(tab, raw) {
       const dest = omniboxDestination(raw);
       if (!dest) return;
-
       if (dest.kind === "cheddar") {
         const searchMatch = dest.url.match(/^cheddar:\/\/search\?q=(.*)$/i);
         if (searchMatch) {
@@ -756,14 +972,11 @@
         navigateBrowserTab(tab, dest.url);
         return true;
       }
-
       const url = dest.kind === "link" ? dest.url : selectedSearchEngine().replace("%s", encodeURIComponent(dest.query));
       const addr = dest.kind === "link" ? dest.url : `cheddar://search?q=${encodeURIComponent(dest.query)}`;
       const title = dest.kind === "link" ? dest.label : dest.query;
-
       return openProxyInTab(tab, url, addr, title);
     }
-
     async function openProxyInTab(tab, url, addr, title, faviconUrl = null) {
       let proxiedUrl;
       try {
@@ -789,7 +1002,6 @@
         }
         return false;
       }
-
       if (tab.kind === "app") {
         tab.src = proxiedUrl;
         tab.addr = addr;
@@ -799,7 +1011,6 @@
         renderTabStrip();
         return true;
       }
-
       const pane = paneEls[tab.id];
       pane.querySelectorAll(".view").forEach(view => view.classList.remove("active"));
       let frame = pane.querySelector("[data-proxy-frame]");
@@ -825,7 +1036,6 @@
       updateNavButtons();
       return true;
     }
-
     function wireBrowserPane(tab, pane) {
       pane.querySelector('[data-app="games"]').addEventListener("click", () => openGamesTab());
       wireSettings(pane);
@@ -841,7 +1051,6 @@
       renderFooter(pane);
       renderVersion(pane);
     }
-
     function wireSettings(pane) {
       const transport = pane.querySelector('[data-setting="transport"]');
       const backend = pane.querySelector('[data-setting="backend"]');
@@ -858,7 +1067,6 @@
       searchEngine.value = selectedSearchEngine();
       cloak.value = applyAppCloak();
       launchMode.value = savedLaunchMode();
-
       transport.addEventListener("change", async () => {
         const requested = transport.value;
         status.textContent = "Applying transport…";
@@ -876,29 +1084,24 @@
           transport.disabled = false;
         }
       });
-
       backend.addEventListener("change", () => {
         const value = backend.value;
         localStorage.setItem("proxy-backend", value);
         localStorage.setItem("proxyType", value === "scramjet" ? "SJ" : "UV");
         status.textContent = `Backend saved: ${value === "uv" ? "Ultraviolet" : "Scramjet"}.`;
       });
-
       searchEngine.addEventListener("change", () => {
         localStorage.setItem("searchEngine", searchEngine.value);
         status.textContent = `Search engine saved: ${searchEngines[searchEngine.value]}.`;
       });
-
       cloak.addEventListener("change", () => {
         const value = applyAppCloak(cloak.value);
         cloakStatus.textContent = `CheddarOS window set to ${appCloaks[value].title}.`;
       });
-
       launchMode.addEventListener("change", () => {
         localStorage.setItem("cheddar-app-launch-mode", launchMode.value);
         launchStatus.textContent = `CheddarOS will open in: ${launchMode.options[launchMode.selectedIndex].text}.`;
       });
-
       openCheddarButton.addEventListener("click", () => {
         const opened = launchCheddarOS(launchMode.value);
         launchStatus.textContent = opened
@@ -906,7 +1109,6 @@
           : "The browser blocked that launch. Allow pop-ups and try again.";
       });
     }
-
     function switchToTab(id) {
       activeTabId = id;
       Object.values(paneEls).forEach(p => p.classList.remove("active"));
@@ -914,7 +1116,6 @@
       renderTabStrip();
       syncToolbarForActiveTab();
     }
-
     function addBrowserTab() {
       const tab = makeBrowserTab();
       tabs.push(tab);
@@ -922,9 +1123,7 @@
       switchToTab(tab.id);
       return tab;
     }
-
     window.cheddarOpenBrowserTab = () => addBrowserTab();
-
     function launchCheddarOS(mode) {
       const browserUrl = new URL("/core/browser.html", location.origin).href;
       if (mode === "cheddar-tab") {
@@ -943,7 +1142,6 @@
       }
       if (mode === "chrome-tab") return Boolean(window.open(browserUrl, "_blank"));
       if (mode !== "window") return false;
-
       const popup = window.open("about:blank#cheddar", "_blank", "width=800,height=600,toolbar=no,menubar=no,scrollbars=yes,resizable=yes");
       if (!popup) return false;
       const preset = appCloaks[applyAppCloak()];
@@ -952,7 +1150,6 @@
       popup.document.close();
       return true;
     }
-
     function closeTab(id) {
       const idx = tabs.findIndex(t => t.id === id);
       if (idx === -1) return;
@@ -960,7 +1157,6 @@
       if (pane) pane.remove();
       delete paneEls[id];
       tabs.splice(idx, 1);
-
       if (tabs.length === 0) {
         const tab = makeBrowserTab();
         tabs.push(tab);
@@ -968,7 +1164,6 @@
         switchToTab(tab.id);
         return;
       }
-
       if (activeTabId === id) {
         const next = tabs[idx] || tabs[idx - 1] || tabs[0];
         switchToTab(next.id);
@@ -976,7 +1171,6 @@
         renderTabStrip();
       }
     }
-
     function openGamesTab() {
       const existing = tabs.find(t => t.kind === "app" && t.addr === "cheddar://games");
       if (existing) {
@@ -989,7 +1183,6 @@
       switchToTab(tab.id);
       return tab;
     }
-
     window.cheddarOpenGame = async (game) => {
       if (!game || typeof game.url !== "string") return false;
       let gameUrl;
@@ -1028,7 +1221,6 @@
       switchToTab(tab.id);
       return openProxyInTab(tab, gameUrl.href, gameUrl.href.replace(/^https?:\/\//i, "").replace(/\/$/, ""), game.name || gameUrl.href, artwork || null);
     };
-
     function navigateBrowserTab(tab, url, addToHistory = true) {
       url = url.trim();
       if (/^https?:\/\//i.test(url)) {
@@ -1042,7 +1234,6 @@
       tab.proxyUrl = null;
       tab.displayAddr = null;
       tab.favicon = cheddarFavicon;
-
       if (url === "cheddar://home") {
         pane.querySelector("#view-home").classList.add("active");
         tab.title = "New Tab";
@@ -1060,20 +1251,17 @@
         pane.querySelector("#view-notfound").classList.add("active");
         tab.title = "Not found";
       }
-
       if (addToHistory) {
         tab.history = tab.history.slice(0, tab.historyIndex + 1);
         tab.history.push(url);
         tab.historyIndex = tab.history.length - 1;
       }
-
       if (tab.id === activeTabId) {
         addressInput.value = url;
         renderTabStrip();
         updateNavButtons();
       }
     }
-
     function syncToolbarForActiveTab() {
       const tab = currentTab();
       if (!tab) return;
@@ -1084,7 +1272,6 @@
       }
       updateNavButtons();
     }
-
     function updateNavButtons() {
       const tab = currentTab();
       const backBtn = document.querySelector("#back-btn");
@@ -1097,7 +1284,6 @@
       backBtn.classList.toggle("disabled", tab.historyIndex <= 0);
       fwdBtn.classList.toggle("disabled", tab.historyIndex >= tab.history.length - 1);
     }
-
     document.querySelector("#back-btn").addEventListener("click", () => {
       const tab = currentTab();
       if (!tab || tab.kind !== "browser") return;
@@ -1135,13 +1321,11 @@
       const tab = currentTab();
       if (tab && tab.kind === "browser") navigateBrowserTab(tab, "cheddar://changelog");
     });
-
     addressInput.addEventListener("keydown", (e) => {
       if (e.key !== "Enter") return;
       const tab = currentTab();
       if (tab) goToDestination(tab, addressInput.value);
     });
-
     renderAnnouncement();
     const initialTab = makeBrowserTab();
     tabs.push(initialTab);
@@ -1150,7 +1334,6 @@
     paneEls[initialTab.id].classList.add("active");
     renderTabStrip();
     syncToolbarForActiveTab();
-
     window.addEventListener('beforeunload', e => {
       if (window.__cheddarAllowClose) return;
       e.preventDefault();
