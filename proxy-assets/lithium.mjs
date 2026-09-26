@@ -189,7 +189,7 @@ export function getTransportChoice() {
   return validTransports.has(saved) ? saved : "bare";
 }
 
-export async function setTransport(transport = getTransportChoice()) {
+export async function setTransport(transport = getTransportChoice(), { persist = true } = {}) {
   if (!validTransports.has(transport)) {
     throw new TypeError(`Unsupported transport: ${transport}`);
   }
@@ -205,9 +205,11 @@ export async function setTransport(transport = getTransportChoice()) {
   selectedTransport = transport;
   transportURL = transportOptions[transport];
   await updateBareMux();
-  localStorage.setItem("proxy-transport", transport);
-  localStorage.setItem("transport", transport);
-  localStorage.setItem("transportType", transport);
+  if (persist) {
+    localStorage.setItem("proxy-transport", transport);
+    localStorage.setItem("transport", transport);
+    localStorage.setItem("transportType", transport);
+  }
   console.log(`lethal.js: Transport active: ${transport}`);
 }
 

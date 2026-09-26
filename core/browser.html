@@ -392,9 +392,9 @@
               </select>
             </label>
             <label class="setting-card">
-              <span class="setting-copy"><span class="setting-title">Search Engine</span><span class="setting-description">Choose where text searches are sent.</span></span>
+              <span class="setting-copy"><span class="setting-title">Search Engine</span><span class="setting-description">Choose where text searches are sent. DuckDuckGo uses Epoxy when Bare Server is selected.</span></span>
               <select data-setting="search-engine" aria-label="Search Engine">
-                <option value="https://duckduckgo.com/?q=%s">DDgo (Default)</option>
+                <option value="https://duckduckgo.com/?q=%s">DuckDuckGo (Default)</option>
                 <option value="https://www.google.com/search?q=%s">Google</option>
                 <option value="https://search.brave.com/search?q=%s">Brave</option>
                 <option value="https://www.bing.com/search?q=%s">Bing</option>
@@ -477,7 +477,7 @@
     let activeTabId = null;
     const cheddarFavicon = "/loader/favicon.png";
     const searchEngines = {
-      "https://duckduckgo.com/?q=%s": "DDgo",
+      "https://duckduckgo.com/?q=%s": "DuckDuckGo",
       "https://www.google.com/search?q=%s": "Google",
       "https://search.brave.com/search?q=%s": "Brave",
       "https://www.bing.com/search?q=%s": "Bing",

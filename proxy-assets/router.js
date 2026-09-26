@@ -30,6 +30,14 @@ export async function configureTransport(transport) {
 window.cheddarProxyOpen = async (input) => {
   await prepareProxy();
   const url = makeURL(input);
+  const destinationHost = new URL(url).hostname.toLowerCase();
+  const isDuckDuckGo = destinationHost === "duckduckgo.com" || destinationHost.endsWith(".duckduckgo.com");
+  // DuckDuckGo rejects searches sent through this site's Vercel Bare Server
+  // egress. Keep Bare Server as the saved default, but route DuckDuckGo via
+  // the site's Epoxy/Wisp transport for this browsing session.
+  if (isDuckDuckGo && getTransportChoice() === "bare") {
+    await setTransport("epoxy", { persist: false });
+  }
   const selected = getProxyType();
   if (selected === "SJ") {
     await ensureProxyReady();
