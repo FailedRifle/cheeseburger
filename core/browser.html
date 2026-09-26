@@ -546,6 +546,13 @@
       }
     }
 
+    function gameArtworkUrl(url) {
+      return String(url || "").replace(
+        /^https:\/\/cdn\.jsdelivr\.net\/gh\/gn-math\/covers@main\//i,
+        "https://raw.githubusercontent.com/gn-math/covers/main/",
+      );
+    }
+
     function makeBrowserTab() {
       const id = nextTabId++;
       return {
@@ -895,11 +902,25 @@
 
     window.cheddarOpenGame = async (game) => {
       if (!game || typeof game.url !== "string" || !/^https:\/\//i.test(game.url)) return false;
+      const artwork = gameArtworkUrl(game.image);
+      if (/\.html?(?:$|[?#])/i.test(game.url)) {
+        const appTab = makeAppTab(
+          game.name || "Game",
+          `/api/game-document?url=${encodeURIComponent(game.url)}`,
+          game.url,
+          artwork || game.url,
+        );
+        appTab.favicon = artwork || faviconForUrl(game.url);
+        tabs.push(appTab);
+        buildPane(appTab);
+        switchToTab(appTab.id);
+        return true;
+      }
       const tab = makeBrowserTab();
       tabs.push(tab);
       buildPane(tab);
       switchToTab(tab.id);
-      return openProxyInTab(tab, game.url, game.url.replace(/^https?:\/\//i, "").replace(/\/$/, ""), game.name || game.url, game.image || game.url);
+      return openProxyInTab(tab, game.url, game.url.replace(/^https?:\/\//i, "").replace(/\/$/, ""), game.name || game.url, artwork || null);
     };
 
     function navigateBrowserTab(tab, url, addToHistory = true) {

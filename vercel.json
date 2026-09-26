@@ -3,7 +3,8 @@
   "fluid": true,
   "functions": {
     "api/wisp.js": { "maxDuration": 300 },
-    "api/bare/index.js": { "maxDuration": 300 }
+    "api/bare/index.js": { "maxDuration": 300 },
+    "api/game-document.js": { "includeFiles": "core/json/games.json" }
   },
   "rewrites": [
     { "source": "/baremux/index.mjs", "destination": "/api/proxy-assets?asset=baremux-index" },

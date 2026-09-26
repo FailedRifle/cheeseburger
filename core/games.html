@@ -175,7 +175,7 @@
           <div class="creator-title">Created by <span class="creator-name">CheddarOS</span></div>
           <div class="creator-desc">Browse the library and hit play — every game here runs instantly in your browser, no downloads or installs needed. Search for a title, star your favorites for quick access, and jump back in whenever you want.</div>
         </div>
-        <div class="section-label">All Games</div>
+        <div class="section-label" id="games-count">Loading games…</div>
         <div class="grid" id="games-grid"></div>
       </div>
       <div id="game-page">
@@ -343,6 +343,7 @@ function buildNewGrid() {
   const grid = document.getElementById("games-grid");
   if (!grid) return;
   grid.innerHTML = "";
+  document.getElementById("games-count").textContent = `${Object.keys(sites).length} games`;
   Object.entries(sites).sort((a, b) => a[1].name.localeCompare(b[1].name)).forEach(([key, s]) => {
     grid.appendChild(buildCard(key, s));
   });
