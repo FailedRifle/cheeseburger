@@ -11,7 +11,8 @@
     { "source": "/epoxy/index.mjs", "destination": "/api/proxy-assets?asset=epoxy-index" },
     { "source": "/libcurl/index.mjs", "destination": "/api/proxy-assets?asset=libcurl-index" },
     { "source": "/baremod/index.mjs", "destination": "/api/proxy-assets?asset=baremod-index" },
-    { "source": "^/bare/(.*)$", "destination": "/api/bare?barePath=/$1" },
+    { "source": "/bare/", "destination": "/api/bare?barePath=/" },
+    { "source": "/bare/v3/", "destination": "/api/bare?barePath=/v3/" },
     { "source": "/wisp/", "destination": "/api/wisp" },
     { "source": "/wisp/:path*", "destination": "/api/wisp" },
     { "source": "/((?!api/|loader/|core/).*)", "destination": "/index.html" }
