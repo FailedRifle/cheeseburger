@@ -168,11 +168,6 @@
         <div class="sidebar-header">- ALL GAMES</div>
         <div id="games-sidebar"></div>
       </div>
-      <div class="sidebar-divider" id="offline-divider" style="display:none"></div>
-      <div class="sidebar-section" id="offline-section" style="display:none">
-        <div class="sidebar-header offline-header">- OFFLINE GAMES</div>
-        <div id="offline-sidebar"></div>
-      </div>
     </div>
     <div id="main">
       <div class="page active" id="page-home">
@@ -180,8 +175,8 @@
           <div class="creator-title">Created by <span class="creator-name">CheddarOS</span></div>
           <div class="creator-desc">Browse the library and hit play — every game here runs instantly in your browser, no downloads or installs needed. Search for a title, star your favorites for quick access, and jump back in whenever you want.</div>
         </div>
-        <div class="section-label">New Games</div>
-        <div class="grid" id="new-grid"></div>
+        <div class="section-label">All Games</div>
+        <div class="grid" id="games-grid"></div>
       </div>
       <div id="game-page">
         <div class="game-banner" id="game-banner"><div class="no-banner">No image</div></div>
@@ -199,62 +194,7 @@
   </div>
 </div>
 <script>
-const sites = {
-  "fnac": { name: "Five Nights at Cheddar's", enabled: true, src: "fnac" },
-  "brawl simulator 3d": { name: "Brawl Simulator 3D", enabled: true, src: "brawl-stars" },
-  "moto x3m poolparty": { name: "Moto X3M PoolParty", enabled: true, src: "moto-x3m-poolparty" },
-  "crossy road": { name: "Crossy Road", enabled: true, src: "crossy-roads" },
-  "tiny fishing": { name: "Tiny Fishing", enabled: true, src: "tiny-fishing" },
-  "raft": { name: "Raft", enabled: true, src: "raft" },
-  "moto x3m": { name: "Moto X3M", enabled: true, src: "moto-x3m" },
-  "nitro type": { name: "Nitro Type", enabled: true, src: "nitro-type" },
-  "granny": { name: "Granny", enabled: true, src: "granny" },
-  "flappy dunk": { name: "Flappy Dunk", enabled: true, src: "flappy-dunk" },
-  "flappy bird": { name: "Flappy Bird", enabled: true, src: "flappy-bird" },
-  "clash of vikings": { name: "Clash of Vikings", enabled: true, src: "clash-of-vikings" },
-  "people playground": { name: "People Playground", enabled: true, src: "people-playground" },
-  "flying gorilla": { name: "Flying Gorilla", enabled: true, src: "flying-gorilla" },
-  "gta 3": { name: "Grand Theft Auto III", enabled: true, src: "gta-3" },
-  "peak": { name: "PEAK", enabled: true, src: "peak" },
-  "clustertruck": { name: "ClusterTruck", enabled: true, src: "clustertruck" },
-  "highway racer 2": { name: "Highway Racer 2", enabled: true, src: "highway-racer-2" },
-  "60 seconds": { name: "60 Seconds!", enabled: true, src: "60-seconds" },
-  "baldis basic": { name: "Baldi's Basic", enabled: true, src: "baldis-basic" },
-  "bowmasters": { name: "BOWMASTERS", enabled: true, src: "bowmasters" },
-  "cookie clicker": { name: "Cookie Clicker", enabled: true, src: "cookie-clicker" },
-  "they are coming": { name: "They are Coming", enabled: true, src: "they-are-coming" },
-  "postal": { name: "Postal", enabled: true, src: "postal" },
-  "orange roulette": { name: "Orange Roulette", enabled: true, src: "orange-roulette" },
-  "fnae": { name: "Five Nights at Epstein's", enabled: true, src: "fnae" },
-  "gta vc": { name: "Grand Theft Auto: Vice City", enabled: true, src: "gta-vc" },
-  "plants vs zombies": { name: "Plants VS. Zombies", enabled: true, src: "plants-vs-zombies" },
-  "raft wars 2": { name: "Raft Wars 2", enabled: true, src: "raft-wars-2" },
-  "snow rider": { name: "Snow Rider 3D", enabled: true, src: "snow-rider3d" },
-  "retro bowl": { name: "Retro Bowl", enabled: true, src: "retro-bowl" },
-  "wrestle bros": { name: "Wrestle Bros", enabled: false, src: "wrestle-bros" },
-  "potato": { name: "Throw a Potato", enabled: true, src: "throw-a-potato" },
-  "drift hunters": { name: "Drift Hunters", enabled: true, src: "drift-hunters" },
-  "basketball legends": { name: "Basketball Legends 2020", enabled: false, src: "basketball-legends" },
-  "cheddar clicker": { name: "Cheddar Clicker", enabled: true, src: "cheddar-clicker" },
-  "bloons td4": { name: "Bloons Tower Defense 4", enabled: true, src: "bloons-td4" },
-  "geometry dash": { name: "Geometry Dash Lite", enabled: true, src: "geometry-dash" },
-  "minecraft": { name: "Minecraft v1.8.8", enabled: true, src: "minecraft" },
-  "zombies": { name: "Nazi Zombies", enabled: true, src: "nz-zombies" },
-  "sm64": { name: "Super Mario 64", enabled: true, src: "sm64" },
-  "buckshot": { name: "Buckshot Roulette", enabled: true, src: "buckshot-roulette" },
-  "fnaf": { name: "Five Nights at Freddy's", enabled: true, src: "fnaf1" },
-  "fnaf2": { name: "Five Nights at Freddy's 2", enabled: true, src: "fnaf2" },
-  "fnaf3": { name: "Five Nights at Freddy's 3", enabled: false, src: "fnaf3" },
-  "fnaf4": { name: "Five Nights at Freddy's 4", enabled: true, src: "fnaf4" },
-  "cheese rolling": { name: "Cheese Rolling", enabled: true, src: "cheeserolling" },
-  "getting over it": { name: "Getting Over It", enabled: true, src: "getting-over-it" },
-  "learn to fly 3": { name: "Learn to Fly 3", enabled: true, src: "learn-to-fly3" },
-  "escape road": { name: "Escape Road", enabled: true, src: "escape-road" },
-  "adventure capitalist": { name: "AdVenture Capitalist!", enabled: true, src: "adventure-capitalist" },
-  "backrooms": { name: "Backrooms", enabled: true, src: "backrooms" },
-  "bloons td5": { name: "Bloons Tower Defense 5", enabled: true, src: "bloons-td5" },
-  "idle breakout": { name: "Idle Breakout", enabled: true, src: "idle-breakout" },
-};
+let sites = {};
 const getGameDir = () => `/core/games`;
 const FAVS_KEY = "library-favs";
 const PLAYTIME_KEY = "library-playtime";
@@ -288,14 +228,12 @@ function renderFavBtn(key) {
   btn.style.color = on ? "var(--yellow)" : "var(--text-dim)";
 }
 function niceKey(key) {
-  return key;
+  return sites[key]?.name || key;
 }
 function createHoverLabel(key, prettyName, className) {
   const span = document.createElement("span");
   if (className) span.className = className;
-  span.textContent = niceKey(key);
-  span.addEventListener("mouseenter", () => { span.textContent = prettyName; });
-  span.addEventListener("mouseleave", () => { span.textContent = niceKey(key); });
+  span.textContent = prettyName || niceKey(key);
   return span;
 }
 function mdInline(s) {
@@ -327,42 +265,20 @@ function mdToHtml(md) {
 function buildSidebar() {
   const gEl = document.getElementById("games-sidebar");
   gEl.innerHTML = "";
-  Object.entries(sites).filter(([, s]) => s.enabled).sort((a, b) => a[0].localeCompare(b[0])).forEach(([key, s]) => {
+  Object.entries(sites).sort((a, b) => a[1].name.localeCompare(b[1].name)).forEach(([key, s]) => {
     const btn = document.createElement("button");
     btn.className = "sidebar-item";
     btn.dataset.key = key;
     const icon = document.createElement("img");
     icon.className = "sidebar-item-icon";
-    icon.src = `${getGameDir()}/${s.src}/icon.png`;
+    icon.src = s.image;
+    icon.loading = "lazy";
     icon.alt = "";
     icon.onerror = () => { icon.style.display = "none"; };
     btn.appendChild(icon);
     btn.appendChild(createHoverLabel(key, s.name, "sidebar-item-label"));
     btn.onclick = () => showGame(key);
     gEl.appendChild(btn);
-  });
-}
-function buildOfflineSidebar() {
-  const offline = Object.entries(sites).filter(([, s]) => !s.enabled).sort((a, b) => a[0].localeCompare(b[0]));
-  const sec = document.getElementById("offline-section");
-  const div = document.getElementById("offline-divider");
-  const cont = document.getElementById("offline-sidebar");
-  cont.innerHTML = "";
-  if (!offline.length) { sec.style.display = "none"; div.style.display = "none"; return; }
-  sec.style.display = ""; div.style.display = "";
-  offline.forEach(([key, s]) => {
-    const btn = document.createElement("button");
-    btn.className = "sidebar-item offline-item";
-    btn.dataset.key = key;
-    const icon = document.createElement("img");
-    icon.className = "sidebar-item-icon";
-    icon.src = `${getGameDir()}/${s.src}/icon.png`;
-    icon.alt = "";
-    icon.onerror = () => { icon.style.display = "none"; };
-    btn.appendChild(icon);
-    btn.appendChild(createHoverLabel(key, s.name, "sidebar-item-label"));
-    btn.onclick = () => showGame(key);
-    cont.appendChild(btn);
   });
 }
 function rebuildFavSidebar() {
@@ -384,7 +300,8 @@ function rebuildFavSidebar() {
     btn.appendChild(star);
     const icon = document.createElement("img");
     icon.className = "sidebar-item-icon";
-    icon.src = `${getGameDir()}/${s.src}/icon.png`;
+    icon.src = s.image;
+    icon.loading = "lazy";
     icon.alt = "";
     icon.onerror = () => { icon.style.display = "none"; };
     btn.appendChild(icon);
@@ -399,7 +316,8 @@ function buildCard(key, s) {
   const imgWrap = document.createElement("div");
   imgWrap.className = "card-img";
   const img = document.createElement("img");
-  img.src = `${getGameDir()}/${s.src}/icon.png`;
+  img.src = s.image;
+  img.loading = "lazy";
   const noImg = document.createElement("div");
   noImg.className = "no-img";
   noImg.style.cssText = "display:none;width:100%;height:100%;align-items:center;justify-content:center;";
@@ -416,9 +334,10 @@ function buildCard(key, s) {
   return c;
 }
 function buildNewGrid() {
-  const grid = document.getElementById("new-grid");
+  const grid = document.getElementById("games-grid");
+  if (!grid) return;
   grid.innerHTML = "";
-  Object.entries(sites).filter(([, s]) => s.enabled).slice(0, 6).forEach(([key, s]) => {
+  Object.entries(sites).sort((a, b) => a[1].name.localeCompare(b[1].name)).forEach(([key, s]) => {
     grid.appendChild(buildCard(key, s));
   });
 }
@@ -427,10 +346,13 @@ searchInput.addEventListener("input", () => renderDropdown(searchInput.value.toL
 function renderDropdown(q) {
   searchDropdown.innerHTML = "";
   if (!q) { searchDropdown.style.display = "none"; return; }
-  const results = Object.entries(sites).filter(([key, s]) => s.enabled && (key.includes(q) || s.name.toLowerCase().includes(q)));
+  const results = Object.entries(sites).filter(([key, s]) => key.toLowerCase().includes(q) || s.name.toLowerCase().includes(q));
   if (!results.length) {
     searchDropdown.style.display = "block";
-    searchDropdown.innerHTML = `<div style="padding:8px 10px;color:var(--red);font-size:11px;text-align:center">No results for "${q}"</div>`;
+    const empty = document.createElement("div");
+    empty.style.cssText = "padding:8px 10px;color:var(--red);font-size:11px;text-align:center";
+    empty.textContent = `No results for "${q}"`;
+    searchDropdown.appendChild(empty);
     return;
   }
   searchDropdown.style.display = "block";
@@ -469,40 +391,39 @@ async function showGame(key) {
   document.getElementById("game-page").classList.add("active");
   document.querySelectorAll(".sidebar-item").forEach(b => b.classList.toggle("active", b.dataset.key === key));
   const bannerEl = document.getElementById("game-banner");
-  bannerEl.innerHTML = `<img src="${getGameDir()}/${s.src}/banner.png" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt=""><div class="no-banner" style="display:none">No image</div>`;
+  bannerEl.replaceChildren();
+  const banner = document.createElement("img");
+  banner.src = s.image;
+  banner.alt = `${s.name} artwork`;
+  banner.onerror = () => { banner.style.display = "none"; noBanner.style.display = "flex"; };
+  const noBanner = document.createElement("div");
+  noBanner.className = "no-banner";
+  noBanner.style.display = "none";
+  noBanner.textContent = "No image";
+  bannerEl.append(banner, noBanner);
   const ico = document.getElementById("game-icon-sm");
-  ico.src = `${getGameDir()}/${s.src}/icon.png`; ico.style.display = "";
+  ico.src = s.image; ico.style.display = "";
   const nameBar = document.getElementById("game-name-bar");
   nameBar.textContent = s.name;
   renderFavBtn(key);
   document.getElementById("game-fav-btn").onclick = () => toggleFav(key);
   const descArea = document.getElementById("game-desc-area");
   const playBtn = document.getElementById("game-play-btn");
-  if (!s.enabled) {
-    descArea.innerHTML = `<div class="game-offline-notice">'${s.name}' is not currently available.</div>`;
-    playBtn.disabled = true; playBtn.style.opacity = "0.4";
-  } else {
-    descArea.innerHTML = `<div class="game-desc-box">Loading description...</div>`;
-    renderPlaytime(key);
-    try {
-      const r = await fetch(`${getGameDir()}/${s.src}/desc.md`);
-      const text = r.ok ? await r.text() : (s.desc || "No description available.");
-      descArea.querySelector(".game-desc-box").innerHTML = mdToHtml(text);
-    } catch {
-      descArea.querySelector(".game-desc-box").innerHTML = mdToHtml(s.desc || "No description available.");
-    }
-    playBtn.disabled = false; playBtn.style.opacity = "1";
-  }
-  playBtn.onclick = s.enabled ? () => launchGame(key) : null;
+  descArea.innerHTML = `<div class="game-desc-box">${s.proxy ? "This game opens in a CheddarOS proxy tab." : "This game opens directly in a new tab."}</div>`;
+  renderPlaytime(key);
+  playBtn.disabled = false;
+  playBtn.style.opacity = "1";
+  playBtn.onclick = () => launchGame(key);
 }
 function launchGame(key) {
   const s = sites[key];
-  const gameUrl = `${getGameDir()}/${s.src}/index.html`;
-  const win = window.open(`about:blank#cheddar/games/${s.src}`, "_blank");
+  if (!s) return;
+  if (s.proxy && typeof window.parent.cheddarOpenGame === "function") {
+    window.parent.cheddarOpenGame(s);
+    return;
+  }
+  const win = window.open(s.url, "_blank", "noopener,noreferrer");
   if (!win) return;
-  win.document.open();
-  win.document.write(`<!DOCTYPE html><html><head><title>${s.name}</title><style>html,body{margin:0;height:100%;overflow:hidden;background:#000}</style></head><body><iframe src="${gameUrl}" style="border:0;width:100%;height:100%" allowfullscreen></iframe></body></html>`);
-  win.document.close();
   const startTime = Date.now();
   const liveUpdateInterval = setInterval(() => {
     const elapsedMins = (Date.now() - startTime) / 60000;
@@ -524,10 +445,18 @@ function launchGame(key) {
   }, 2000);
 }
 (function init() {
-  buildSidebar();
-  buildOfflineSidebar();
-  rebuildFavSidebar();
-  buildNewGrid();
+  fetch("/core/json/games.json", { cache: "no-store" })
+    .then(response => { if (!response.ok) throw new Error(`Games list failed to load (${response.status})`); return response.json(); })
+    .then(games => {
+      sites = Object.fromEntries(games.filter(game => game && game.new !== true && typeof game.name === "string" && typeof game.url === "string" && typeof game.image === "string").map(game => [game.url, game]));
+      buildSidebar();
+      rebuildFavSidebar();
+      buildNewGrid();
+    })
+    .catch(error => {
+      console.error("Could not load games:", error);
+      document.getElementById("games-grid").textContent = "Games could not be loaded. Please refresh and try again.";
+    });
 })();
 </script>
 </body>

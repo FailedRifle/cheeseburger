@@ -680,7 +680,7 @@
       return openProxyInTab(tab, url, addr, title);
     }
 
-    async function openProxyInTab(tab, url, addr, title) {
+    async function openProxyInTab(tab, url, addr, title, faviconUrl = url) {
       let proxiedUrl;
       try {
         proxiedUrl = await proxyExternalUrl(url);
@@ -730,7 +730,7 @@
       tab.proxyUrl = proxiedUrl;
       tab.displayAddr = addr;
       tab.title = title;
-      tab.favicon = faviconForUrl(url);
+      tab.favicon = faviconForUrl(faviconUrl);
       if (tab.history[tab.historyIndex] !== url) {
         tab.history = tab.history.slice(0, tab.historyIndex + 1);
         tab.history.push(url);
@@ -832,11 +832,26 @@
     }
 
     function openGamesTab() {
+      const existing = tabs.find(t => t.kind === "app" && t.addr === "cheddar://games");
+      if (existing) {
+        switchToTab(existing.id);
+        return existing;
+      }
       const tab = makeAppTab("CheddarGames", "core/games.html", "cheddar://games");
       tabs.push(tab);
       buildPane(tab);
       switchToTab(tab.id);
+      return tab;
     }
+
+    window.cheddarOpenGame = async (game) => {
+      if (!game || typeof game.url !== "string" || !/^https:\/\//i.test(game.url)) return false;
+      const tab = makeBrowserTab();
+      tabs.push(tab);
+      buildPane(tab);
+      switchToTab(tab.id);
+      return openProxyInTab(tab, game.url, game.url.replace(/^https?:\/\//i, "").replace(/\/$/, ""), game.name || game.url, game.image || game.url);
+    };
 
     function navigateBrowserTab(tab, url, addToHistory = true) {
       url = url.trim();
@@ -855,6 +870,9 @@
       if (url === "cheddar://home") {
         pane.querySelector("#view-home").classList.add("active");
         tab.title = "New Tab";
+      } else if (url === "cheddar://games") {
+        openGamesTab();
+        return;
       } else if (url === "cheddar://settings") {
         pane.querySelector("#view-settings").classList.add("active");
         tab.title = "Settings";
