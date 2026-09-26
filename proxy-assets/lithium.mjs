@@ -62,11 +62,13 @@ async function initializeScramjet() {
   return scramjetReady;
 }
 const transportOptions = {
-  // BareMux's CDN worker evaluates transport imports from an about:blank
-  // worker context, so root-relative URLs cannot be resolved there.
+  bare: `${location.origin}/baremod/index.mjs`,
   epoxy: `${location.origin}/epoxy/index.mjs`,
   libcurl: `${location.origin}/libcurl/index.mjs`,
 };
+const validTransports = new Set(Object.keys(transportOptions));
+let selectedTransport = null;
+let appliedTransport = null;
 
 //////////////////////////////
 ///           SW           ///
@@ -132,8 +134,16 @@ if (window.self === window.top) {
  * @param {string} [template="https://search.brave.com/search?q=%s"] - Search URL template.
  * @returns {string} Valid URL string.
  */
-// Store the search engine template
-localStorage.setItem("searchEngine", "https://duckduckgo.com/?q=%s");
+const DEFAULT_SEARCH_ENGINE = "https://duckduckgo.com/?q=%s";
+const validSearchEngines = new Set([
+  DEFAULT_SEARCH_ENGINE,
+  "https://www.google.com/search?q=%s",
+  "https://search.brave.com/search?q=%s",
+  "https://www.bing.com/search?q=%s",
+]);
+if (!validSearchEngines.has(localStorage.getItem("searchEngine"))) {
+  localStorage.setItem("searchEngine", DEFAULT_SEARCH_ENGINE);
+}
 
 // Function to make a URL
 export function makeURL(input, template) {
@@ -154,12 +164,19 @@ export function makeURL(input, template) {
  * @returns {Promise<void>}
  */
 async function updateBareMux() {
-  if (transportURL != null && wispURL != null) {
-    console.log(
-      `lethal.js: Setting BareMux to ${transportURL} and Wisp to ${wispURL}`
-    );
+  if (!selectedTransport || !transportURL) return;
+  const bareURL = `${location.origin}/bare/`;
+  const configKey = selectedTransport === "bare" ? `bare:${bareURL}` : `${selectedTransport}:${wispURL}`;
+  if (configKey === appliedTransport) return;
+  if (selectedTransport === "bare") {
+    console.log(`lethal.js: Setting BareMux to Bare Server at ${bareURL}`);
+    await connection.setTransport(transportURL, [bareURL]);
+  } else {
+    if (!wispURL) return;
+    console.log(`lethal.js: Setting BareMux to ${transportURL} via ${wispURL}`);
     await connection.setTransport(transportURL, [{ wisp: wispURL }]);
   }
+  appliedTransport = configKey;
 }
 
 /**
@@ -167,12 +184,31 @@ async function updateBareMux() {
  * @param {string} transport - Transport name or URL.
  * @returns {Promise<void>}
  */
-export async function setTransport(transport) {
-  console.log(`lethal.js: Setting transport to ${transport}`);
+export function getTransportChoice() {
+  const saved = localStorage.getItem("proxy-transport");
+  return validTransports.has(saved) ? saved : "bare";
+}
+
+export async function setTransport(transport = getTransportChoice()) {
+  if (!validTransports.has(transport)) {
+    throw new TypeError(`Unsupported transport: ${transport}`);
+  }
+  if (transport === "bare") {
+    const bareURL = `${location.origin}/bare/`;
+    const response = await fetch(bareURL, { cache: "no-store" });
+    if (!response.ok) throw new Error(`Bare Server returned HTTP ${response.status}.`);
+    const manifest = await response.json();
+    if (!Array.isArray(manifest.versions) || !manifest.versions.includes("v3")) {
+      throw new Error("Bare Server did not advertise the required v3 protocol.");
+    }
+  }
+  selectedTransport = transport;
+  transportURL = transportOptions[transport];
+  await updateBareMux();
+  localStorage.setItem("proxy-transport", transport);
   localStorage.setItem("transport", transport);
   localStorage.setItem("transportType", transport);
-  transportURL = transportOptions[transport] || transport;
-  await updateBareMux();
+  console.log(`lethal.js: Transport active: ${transport}`);
 }
 
 export function getProxyType() {

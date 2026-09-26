@@ -6,26 +6,38 @@ import Fastify from "fastify";
 import fastifyStatic from "@fastify/static";
 import { epoxyPath } from "@mercuryworkshop/epoxy-transport";
 import { baremuxPath } from "@mercuryworkshop/bare-mux/node";
+import { createBareServer } from "@tomphttp/bare-server-node";
 
 logging.set_level(logging.NONE);
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+const bareServer = createBareServer("/bare/");
 const fastify = Fastify({
   trustProxy: true,
   serverFactory: (handler) => createServer()
     .on("request", (req, res) => {
       res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
       res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
+      if (bareServer.shouldRoute(req)) {
+        void bareServer.routeRequest(req, res);
+        return;
+      }
       handler(req, res);
     })
     .on("upgrade", (req, socket, head) => {
-      if (req.headers.upgrade?.toLowerCase() === "websocket") wisp.routeRequest(req, socket, head);
-      else socket.end();
+      if (req.headers.upgrade?.toLowerCase() !== "websocket") return socket.end();
+      if (bareServer.shouldRoute(req)) bareServer.routeUpgrade(req, socket, head);
+      else wisp.routeRequest(req, socket, head);
     }),
 });
 
 fastify.register(fastifyStatic, { root, prefix: "/", decorateReply: true });
 fastify.register(fastifyStatic, { root: path.join(root, "proxy-assets"), prefix: "/proxy-assets/", decorateReply: false });
 fastify.register(fastifyStatic, { root: epoxyPath, prefix: "/epoxy/", decorateReply: false });
+fastify.register(fastifyStatic, {
+  root: path.join(root, "node_modules/@mercuryworkshop/bare-as-module3/dist"),
+  prefix: "/baremod/",
+  decorateReply: false,
+});
 fastify.register(fastifyStatic, {
   root: path.join(root, "node_modules/@mercuryworkshop/libcurl-transport/dist"),
   prefix: "/libcurl/",

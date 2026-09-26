@@ -1,15 +1,18 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "fluid": true,
-  "functions": { 
-    "api/wisp.js": { 
-      "maxDuration": 300 
-    } 
+  "functions": {
+    "api/wisp.js": { "maxDuration": 300 },
+    "api/bare/[...path].js": { "maxDuration": 300 }
   },
   "rewrites": [
     { "source": "/baremux/index.mjs", "destination": "/api/proxy-assets?asset=baremux-index" },
     { "source": "/baremux/worker.js", "destination": "/api/proxy-assets?asset=baremux-worker" },
     { "source": "/epoxy/index.mjs", "destination": "/api/proxy-assets?asset=epoxy-index" },
+    { "source": "/libcurl/index.mjs", "destination": "/api/proxy-assets?asset=libcurl-index" },
+    { "source": "/baremod/index.mjs", "destination": "/api/proxy-assets?asset=baremod-index" },
+    { "source": "/bare/", "destination": "/api/bare" },
+    { "source": "/bare/:path*", "destination": "/api/bare/:path*" },
     { "source": "/wisp/", "destination": "/api/wisp" },
     { "source": "/wisp/:path*", "destination": "/api/wisp" },
     { "source": "/((?!api/|loader/|core/).*)", "destination": "/index.html" }

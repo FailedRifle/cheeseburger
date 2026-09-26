@@ -11,16 +11,20 @@ import {
   setTransport,
   setWisp,
   getProxyType,
-} from "/proxy-assets/lithium.mjs?v=6";
+  getTransportChoice,
+} from "/proxy-assets/lithium.mjs?v=7";
 
 const wisp = `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/wisp/`;
 
 async function prepareProxy() {
-  // Older builds persisted Libcurl, which can hang on restricted networks.
-  // Migrate that stale selection to the working bundled transport once.
-  await setTransport("epoxy");
   await setWisp(wisp);
+  await setTransport(getTransportChoice());
   await registerSW();
+}
+
+export async function configureTransport(transport) {
+  await setWisp(wisp);
+  await setTransport(transport);
 }
 
 window.cheddarProxyOpen = async (input) => {

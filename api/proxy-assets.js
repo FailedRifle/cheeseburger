@@ -7,6 +7,8 @@ const assets = {
   "baremux-index": path.join(baremuxPath, "index.mjs"),
   "baremux-worker": path.join(baremuxPath, "worker.js"),
   "epoxy-index": path.join(epoxyPath, "index.mjs"),
+  "libcurl-index": path.join(process.cwd(), "node_modules/@mercuryworkshop/libcurl-transport/dist/index.mjs"),
+  "baremod-index": path.join(process.cwd(), "node_modules/@mercuryworkshop/bare-as-module3/dist/index.mjs"),
 };
 
 export default function handler(request, response) {
