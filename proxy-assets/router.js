@@ -12,7 +12,7 @@ import {
   setWisp,
   getProxyType,
   getTransportChoice,
-} from "/proxy-assets/lithium.mjs?v=7";
+} from "/proxy-assets/lithium.mjs?v=8";
 
 const wisp = `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/wisp/`;
 

@@ -629,7 +629,7 @@
 
     let proxyRouterPromise;
     async function proxyExternalUrl(url) {
-      proxyRouterPromise ??= import("/proxy-assets/router.js?v=9");
+      proxyRouterPromise ??= import("/proxy-assets/router.js?v=11");
       await proxyRouterPromise;
       if (typeof window.cheddarProxyOpen !== "function") {
         throw new Error("The proxy router did not initialize.");
@@ -769,7 +769,7 @@
         status.textContent = "Applying transport…";
         transport.disabled = true;
         try {
-          proxyRouterPromise ??= import("/proxy-assets/router.js?v=9");
+          proxyRouterPromise ??= import("/proxy-assets/router.js?v=11");
           const router = await proxyRouterPromise;
           await router.configureTransport(requested);
           status.textContent = `Transport active: ${requested === "bare" ? "Bare Server" : requested}.`;
