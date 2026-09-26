@@ -163,15 +163,6 @@
       border-radius: 6px;
       cursor: default;
     }
-    .bookmark-secret {
-      color: inherit;
-      font: inherit;
-      border: 0;
-      background: transparent;
-      text-align: left;
-      cursor: default;
-    }
-    .bookmark-secret:focus { outline: none; }
     .bookmark.is-link { cursor: pointer; }
     .bookmark.is-link:hover { background: var(--bg-elevated-2); color: var(--text); }
 
@@ -353,7 +344,7 @@
     </div>
 
     <div class="bookmarks-bar">
-      <button class="bookmark bookmark-secret" id="bookmark-cheddar" type="button">Cheddar</button>
+      <span class="bookmark">Cheddar</span>
       <span class="bookmark">On top</span>
       <span class="bookmark is-link" id="bookmark-changelog">Change logs</span>
     </div>
@@ -1143,15 +1134,6 @@
     document.querySelector("#bookmark-changelog").addEventListener("click", () => {
       const tab = currentTab();
       if (tab && tab.kind === "browser") navigateBrowserTab(tab, "cheddar://changelog");
-    });
-
-    let cheddarSecretClicks = 0;
-    document.querySelector("#bookmark-cheddar").addEventListener("click", () => {
-      cheddarSecretClicks += 1;
-      if (cheddarSecretClicks === 5) {
-        cheddarSecretClicks = 0;
-        window.alert("You found a secret! (Matthew doesn't know about this) - Xander; creator of xandersarcade");
-      }
     });
 
     addressInput.addEventListener("keydown", (e) => {
