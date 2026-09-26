@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CheddarOS</title>
+  <link rel="icon" id="app-window-favicon" href="/loader/favicon.png" type="image/png">
   <style>
     * { box-sizing: border-box; }
     :root {
@@ -402,6 +404,22 @@
             </label>
           </div>
           <p class="setting-status" data-settings-status aria-live="polite"></p>
+          <h3 class="settings-section-title">Cloaking</h3>
+          <div class="settings-group">
+            <label class="setting-card">
+              <span class="setting-copy"><span class="setting-title">App name and icon</span><span class="setting-description">Changes the CheddarOS window name and favicon. Website tabs keep their own names and icons.</span></span>
+              <select data-setting="cloak" aria-label="CheddarOS window name and icon">
+                <option value="default">CheddarOS (Default)</option>
+                <option value="classroom">Google Classroom</option>
+                <option value="docs">Google Docs</option>
+                <option value="drive">Google Drive</option>
+                <option value="genesis">Genesis</option>
+                <option value="gmail">Gmail</option>
+                <option value="slides">Google Slides</option>
+              </select>
+            </label>
+          </div>
+          <p class="setting-status" data-cloak-status aria-live="polite"></p>
         </div>
       </div>
     </div>
@@ -480,6 +498,29 @@
     let tabs = [];
     let activeTabId = null;
     const cheddarFavicon = "/loader/favicon.png";
+    const appCloaks = {
+      default: { title: "CheddarOS", icon: cheddarFavicon, type: "image/png" },
+      classroom: { title: "Google Classroom", icon: "/core/images/cloakicons/classroom.ico", type: "image/x-icon" },
+      docs: { title: "Google Docs", icon: "/core/images/cloakicons/docs.ico", type: "image/x-icon" },
+      drive: { title: "Google Drive", icon: "/core/images/cloakicons/drive.ico", type: "image/x-icon" },
+      genesis: { title: "Genesis", icon: "/core/images/cloakicons/genesis.ico", type: "image/x-icon" },
+      gmail: { title: "Gmail", icon: "/core/images/cloakicons/gmail.ico", type: "image/x-icon" },
+      slides: { title: "Google Slides", icon: "/core/images/cloakicons/slides.ico", type: "image/x-icon" },
+    };
+
+    function applyAppCloak(value = localStorage.getItem("cheddar-app-cloak") || "default") {
+      const cloak = appCloaks[value] ? value : "default";
+      const preset = appCloaks[cloak];
+      const favicon = document.querySelector("#app-window-favicon");
+      localStorage.setItem("cheddar-app-cloak", cloak);
+      document.title = preset.title;
+      if (favicon) {
+        favicon.href = preset.icon;
+        favicon.type = preset.type;
+      }
+      return cloak;
+    }
+
     const searchEngines = {
       "https://duckduckgo.com/?q=%s": "DuckDuckGo",
       "https://www.google.com/search?q=%s": "Google",
@@ -499,7 +540,7 @@
       try {
         const origin = new URL(url, location.href).origin;
         if (origin === location.origin) return cheddarFavicon;
-        return `https://www.google.com/s2/favicons?domain_url=${encodeURIComponent(origin)}&sz=32`;
+        return `/api/favicon?url=${encodeURIComponent(origin)}`;
       } catch {
         return cheddarFavicon;
       }
@@ -762,11 +803,14 @@
       const transport = pane.querySelector('[data-setting="transport"]');
       const backend = pane.querySelector('[data-setting="backend"]');
       const searchEngine = pane.querySelector('[data-setting="search-engine"]');
+      const cloak = pane.querySelector('[data-setting="cloak"]');
       const status = pane.querySelector("[data-settings-status]");
+      const cloakStatus = pane.querySelector("[data-cloak-status]");
       const savedTransport = localStorage.getItem("proxy-transport");
       transport.value = ["bare", "epoxy", "libcurl"].includes(savedTransport) ? savedTransport : "bare";
       backend.value = localStorage.getItem("proxy-backend") === "scramjet" || localStorage.getItem("proxyType") === "SJ" ? "scramjet" : "uv";
       searchEngine.value = selectedSearchEngine();
+      cloak.value = applyAppCloak();
 
       transport.addEventListener("change", async () => {
         const requested = transport.value;
@@ -796,6 +840,11 @@
       searchEngine.addEventListener("change", () => {
         localStorage.setItem("searchEngine", searchEngine.value);
         status.textContent = `Search engine saved: ${searchEngines[searchEngine.value]}.`;
+      });
+
+      cloak.addEventListener("change", () => {
+        const value = applyAppCloak(cloak.value);
+        cloakStatus.textContent = `CheddarOS window set to ${appCloaks[value].title}.`;
       });
     }
 

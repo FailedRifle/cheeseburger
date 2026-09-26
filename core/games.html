@@ -196,6 +196,12 @@
 <script>
 let sites = {};
 const getGameDir = () => `/core/games`;
+function fixGameImageUrl(image) {
+  return String(image || "").replace(
+    /^https:\/\/cdn\.jsdelivr\.net\/gh\/gn-math\/covers@main\//i,
+    "https://raw.githubusercontent.com/gn-math/covers/main/",
+  );
+}
 const FAVS_KEY = "library-favs";
 const PLAYTIME_KEY = "library-playtime";
 const getFavs = () => { try { return JSON.parse(localStorage.getItem(FAVS_KEY) || "[]"); } catch { return []; } };
@@ -409,7 +415,7 @@ async function showGame(key) {
   document.getElementById("game-fav-btn").onclick = () => toggleFav(key);
   const descArea = document.getElementById("game-desc-area");
   const playBtn = document.getElementById("game-play-btn");
-  descArea.innerHTML = `<div class="game-desc-box">${s.proxy ? "This game opens in a CheddarOS proxy tab." : "This game opens directly in a new tab."}</div>`;
+  descArea.innerHTML = `<div class="game-desc-box">This game opens in a new CheddarOS tab.</div>`;
   renderPlaytime(key);
   playBtn.disabled = false;
   playBtn.style.opacity = "1";
@@ -418,37 +424,18 @@ async function showGame(key) {
 function launchGame(key) {
   const s = sites[key];
   if (!s) return;
-  if (s.proxy && typeof window.parent.cheddarOpenGame === "function") {
-    window.parent.cheddarOpenGame(s);
+  if (typeof window.parent.cheddarOpenGame === "function") {
+    window.parent.cheddarOpenGame({ ...s, image: fixGameImageUrl(s.image) });
     return;
   }
-  const win = window.open(s.url, "_blank", "noopener,noreferrer");
-  if (!win) return;
-  const startTime = Date.now();
-  const liveUpdateInterval = setInterval(() => {
-    const elapsedMins = (Date.now() - startTime) / 60000;
-    const badge = document.getElementById("playtime-badge");
-    if (!badge) return;
-    const total = getPlaytimeMins(key) + elapsedMins;
-    const strong = badge.querySelector("strong");
-    if (strong) strong.textContent = formatPlaytime(total);
-  }, 30000);
-  const pollInterval = setInterval(() => {
-    if (!win || win.closed) {
-      clearInterval(pollInterval);
-      clearInterval(liveUpdateInterval);
-      const elapsedMins = (Date.now() - startTime) / 60000;
-      addPlaytime(key, elapsedMins);
-      const nameBar = document.getElementById("game-name-bar");
-      if (nameBar && document.getElementById("game-page").classList.contains("active")) renderPlaytime(key);
-    }
-  }, 2000);
+  document.getElementById("game-desc-area").textContent =
+    "Open this page in the CheddarOS browser to launch games in an in-app tab.";
 }
 (function init() {
   fetch("/core/json/games.json", { cache: "no-store" })
     .then(response => { if (!response.ok) throw new Error(`Games list failed to load (${response.status})`); return response.json(); })
     .then(games => {
-      sites = Object.fromEntries(games.filter(game => game && game.new !== true && typeof game.name === "string" && typeof game.url === "string" && typeof game.image === "string").map(game => [game.url, game]));
+      sites = Object.fromEntries(games.filter(game => game && game.new !== true && typeof game.name === "string" && typeof game.url === "string" && typeof game.image === "string").map(game => [game.url, { ...game, image: fixGameImageUrl(game.image) }]));
       buildSidebar();
       rebuildFavSidebar();
       buildNewGrid();
