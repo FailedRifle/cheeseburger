@@ -435,14 +435,14 @@
     let changelogDataPromise = null;
     function loadChangelogData() {
       if (!changelogDataPromise) {
-        changelogDataPromise = fetch("/core/json/changelog.json")
+        changelogDataPromise = fetch("/core/json/changelogs.json")
           .then(res => {
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             return res.text();
           })
           .then(text => JSON.parse(stripJsonComments(text)))
           .catch(error => {
-            console.error("Could not load changelog.json:", error);
+            console.error("Could not load changelogs.json:", error);
             changelogDataPromise = null;
             return null;
           });
