@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CheddarOS</title>
+    <title>‎ </title>
     <link id="manifest-link" rel="manifest" href="">
     <link rel="icon" href="loader/favicon.png" type="image/png">
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300&display=swap" rel="stylesheet">
@@ -52,7 +52,6 @@
         }
 
         if (isPWA && installable) {
-            // Get full absolute URL to core/browser.html (works on root or subfolders)
             const browserUrl = new URL('core/browser.html', window.location.href).href;
 
             const newWindow = window.open('about:blank#cheddar', '_blank', 'width=800,height=600,toolbar=no,menubar=no,scrollbars=yes,resizable=yes');
@@ -60,14 +59,13 @@
             if (newWindow) {
                 const doc = newWindow.document;
                 
-                // Write shell wrapper that keeps proper HTTPS origin state intact
                 doc.open();
                 doc.write(`
-                    <!DOCTYPE html>
+                    <!doctype html>
                     <html lang="en">
                     <head>
                         <meta charset="UTF-8">
-                        <title>CheddarOS</title>
+                        <title>CheddarOS Proxy</title>
                         <style>
                             html, body {
                                 margin: 0;
@@ -92,7 +90,6 @@
                 `);
                 doc.close();
 
-                // Close launch tab
                 window.close();
             } else {
                 document.body.textContent = "Popup blocked - please allow popups for this site.";
@@ -119,12 +116,16 @@
             });
         }
 
-        // SW pre-registration on root document context
         if ('serviceWorker' in navigator && installable) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('loader/service-worker.js', { scope: './' }).catch(() => {});
             });
         }
+        
+          window.addEventListener('beforeunload', e => {
+            e.preventDefault();
+            e.returnValue = '';
+        });
     </script>
 </body>
 </html>
