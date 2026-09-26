@@ -16,6 +16,9 @@
 * By creating an account and using **CheddarOS**, you agree that you are solely and personally responsible for everything you do while using the platform — including the games and tools you access, any content you submit (such as bug reports), and how you use your account.
 * **CheddarOS** and its owner assume no liability for how the platform is used. Use it at your own discretion and risk.
 
+#### Proxy Tool Liability
+* The **CheddarOS Proxy** tool is provided for educational and administrative purposes only. Users acknowledge that the use of this tool is at their own risk. The user assumes full legal and financial responsibility for all traffic, activity, and consequences resulting from their use of the proxy. **CheddarOS** and its operators assume no liability for any actions taken by the user or any repercussions incurred, including but not limited to network restrictions or legal actions.
+
 #### Accounts & Usernames
 * Accounts are provided for convenience and are not guaranteed to be permanent.
 * Usernames that are offensive, impersonate another person or entity, or otherwise violate this policy will be **reset without notice**.
