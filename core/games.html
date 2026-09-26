@@ -436,7 +436,7 @@ function launchGame(key) {
   fetch("/core/json/games.json", { cache: "no-store" })
     .then(response => { if (!response.ok) throw new Error(`Games list failed to load (${response.status})`); return response.json(); })
     .then(games => {
-      sites = Object.fromEntries(games.filter(game => game && game.new !== true && typeof game.name === "string" && typeof game.url === "string" && typeof game.image === "string").map(game => [game.url, { ...game, image: fixGameImageUrl(game.image) }]));
+      sites = Object.fromEntries(games.filter(game => game && typeof game.name === "string" && typeof game.url === "string" && typeof game.image === "string").map(game => [game.url, { ...game, image: fixGameImageUrl(game.image) }]));
       buildSidebar();
       rebuildFavSidebar();
       buildNewGrid();

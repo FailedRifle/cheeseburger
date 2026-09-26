@@ -901,14 +901,30 @@
     }
 
     window.cheddarOpenGame = async (game) => {
-      if (!game || typeof game.url !== "string" || !/^https:\/\//i.test(game.url)) return false;
+      if (!game || typeof game.url !== "string") return false;
+      let gameUrl;
+      try {
+        gameUrl = new URL(game.url, location.origin);
+      } catch {
+        return false;
+      }
+      const localGame = gameUrl.origin === location.origin && gameUrl.pathname.startsWith("/core/games/");
+      if (!localGame && gameUrl.protocol !== "https:") return false;
       const artwork = gameArtworkUrl(game.image);
+      if (localGame) {
+        const localTab = makeAppTab(game.name || "Game", gameUrl.href, gameUrl.href, artwork || gameUrl.href);
+        localTab.favicon = artwork || faviconForUrl(gameUrl.href);
+        tabs.push(localTab);
+        buildPane(localTab);
+        switchToTab(localTab.id);
+        return true;
+      }
       if (/\.html?(?:$|[?#])/i.test(game.url)) {
         const appTab = makeAppTab(
           game.name || "Game",
           `/api/game-document?url=${encodeURIComponent(game.url)}`,
-          game.url,
-          artwork || game.url,
+          gameUrl.href,
+          artwork || gameUrl.href,
         );
         appTab.favicon = artwork || faviconForUrl(game.url);
         tabs.push(appTab);
@@ -920,7 +936,7 @@
       tabs.push(tab);
       buildPane(tab);
       switchToTab(tab.id);
-      return openProxyInTab(tab, game.url, game.url.replace(/^https?:\/\//i, "").replace(/\/$/, ""), game.name || game.url, artwork || null);
+      return openProxyInTab(tab, gameUrl.href, gameUrl.href.replace(/^https?:\/\//i, "").replace(/\/$/, ""), game.name || gameUrl.href, artwork || null);
     };
 
     function navigateBrowserTab(tab, url, addToHistory = true) {
