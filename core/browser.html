@@ -974,6 +974,11 @@
     paneEls[initialTab.id].classList.add("active");
     renderTabStrip();
     syncToolbarForActiveTab();
+
+    window.addEventListener('beforeunload', e => {
+      e.preventDefault();
+      e.returnValue = '';
+    });
   </script>
 </body>
 </html>
