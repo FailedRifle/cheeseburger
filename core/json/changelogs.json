@@ -1,4 +1,3 @@
 [
-  /* Template — copy the object below, remove the leading "//" from each line, and fill it in for a new entry
-  { "ver": "vX.X.X", "date": "M/DD/YYYY", "items": ["Description of change"] } */
+  { "ver": "vALPHA-1.0.0", "date": "9/25/2026", "items": ["Released Early Alpha for CheddarOS Proxy"] } 
 ]
