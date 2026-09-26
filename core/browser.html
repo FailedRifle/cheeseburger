@@ -632,9 +632,7 @@
 
     let proxyRouterPromise;
     async function proxyExternalUrl(url) {
-      // The browser is written into an about:blank popup, so load the router
-      // explicitly on first navigation instead of racing its module script.
-      proxyRouterPromise ??= import("/proxy-assets/router.js?v=8");
+      proxyRouterPromise ??= import("/proxy-assets/router.js?v=9");
       await proxyRouterPromise;
       if (typeof window.cheddarProxyOpen !== "function") {
         throw new Error("The proxy router did not initialize.");
@@ -658,6 +656,18 @@
       if (!dest) return;
 
       if (dest.kind === "cheddar") {
+        const searchMatch = dest.url.match(/^cheddar:\/\/search\?q=(.*)$/i);
+        if (searchMatch) {
+          const query = new URLSearchParams(`q=${searchMatch[1]}`).get("q") || "";
+          if (query) {
+            return openProxyInTab(
+              tab,
+              selectedSearchEngine().replace("%s", encodeURIComponent(query)),
+              dest.url,
+              query
+            );
+          }
+        }
         navigateBrowserTab(tab, dest.url);
         return true;
       }
@@ -666,8 +676,10 @@
       const addr = dest.kind === "link" ? dest.url : `cheddar://search?q=${encodeURIComponent(dest.query)}`;
       const title = dest.kind === "link" ? dest.label : dest.query;
 
-      // External pages must go through the proxy. Loading Bing (or any other
-      // external site) directly in this iframe is blocked by its frame policy.
+      return openProxyInTab(tab, url, addr, title);
+    }
+
+    async function openProxyInTab(tab, url, addr, title) {
       let proxiedUrl;
       try {
         proxiedUrl = await proxyExternalUrl(url);
@@ -675,11 +687,17 @@
         console.error("Could not start proxied browser navigation:", error);
         const pane = paneEls[tab.id];
         if (tab.kind === "browser" && pane) {
+          const frame = pane.querySelector("[data-proxy-frame]");
+          if (frame) frame.style.display = "none";
           pane.querySelectorAll(".view").forEach(view => view.classList.remove("active"));
           pane.querySelector("#view-notfound").classList.add("active");
           pane.querySelector("[data-notfound-detail]").textContent =
             `The browser proxy could not start: ${error?.message || error}`;
           tab.title = "Proxy unavailable";
+          tab.favicon = cheddarFavicon;
+          tab.displayAddr = addr;
+          tab.proxyUrl = null;
+          if (tab.id === activeTabId) addressInput.value = addr;
           renderTabStrip();
         } else {
           window.alert("The browser proxy could not start. Please try again in a moment.");
@@ -697,10 +715,29 @@
         return true;
       }
 
-      const newTab = makeAppTab(title, proxiedUrl, addr, url);
-      tabs.push(newTab);
-      buildPane(newTab);
-      switchToTab(newTab.id);
+      const pane = paneEls[tab.id];
+      pane.querySelectorAll(".view").forEach(view => view.classList.remove("active"));
+      let frame = pane.querySelector("[data-proxy-frame]");
+      if (!frame) {
+        frame = document.createElement("iframe");
+        frame.dataset.proxyFrame = "";
+        frame.title = title || "Proxied page";
+        pane.appendChild(frame);
+      }
+      frame.style.display = "block";
+      frame.src = proxiedUrl;
+      tab.proxyUrl = proxiedUrl;
+      tab.displayAddr = addr;
+      tab.title = title;
+      tab.favicon = faviconForUrl(url);
+      if (tab.history[tab.historyIndex] !== url) {
+        tab.history = tab.history.slice(0, tab.historyIndex + 1);
+        tab.history.push(url);
+        tab.historyIndex = tab.history.length - 1;
+      }
+      if (tab.id === activeTabId) addressInput.value = addr;
+      renderTabStrip();
+      updateNavButtons();
       return true;
     }
 
@@ -735,7 +772,7 @@
         status.textContent = "Applying transport…";
         transport.disabled = true;
         try {
-          proxyRouterPromise ??= import("/proxy-assets/router.js?v=8");
+          proxyRouterPromise ??= import("/proxy-assets/router.js?v=9");
           const router = await proxyRouterPromise;
           await router.configureTransport(requested);
           status.textContent = `Transport active: ${requested === "bare" ? "Bare Server" : requested}.`;
@@ -802,8 +839,17 @@
 
     function navigateBrowserTab(tab, url, addToHistory = true) {
       url = url.trim();
+      if (/^https?:\/\//i.test(url)) {
+        void openProxyInTab(tab, url, url.replace(/^https?:\/\//i, "").replace(/\/$/, ""), url);
+        return;
+      }
       const pane = paneEls[tab.id];
+      const frame = pane.querySelector("[data-proxy-frame]");
+      if (frame) frame.style.display = "none";
       pane.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+      tab.proxyUrl = null;
+      tab.displayAddr = null;
+      tab.favicon = cheddarFavicon;
 
       if (url === "cheddar://home") {
         pane.querySelector("#view-home").classList.add("active");
@@ -837,7 +883,7 @@
       const tab = currentTab();
       if (!tab) return;
       if (tab.kind === "browser") {
-        addressInput.value = tab.history[tab.historyIndex];
+        addressInput.value = tab.displayAddr || tab.history[tab.historyIndex];
       } else {
         addressInput.value = tab.addr;
       }
@@ -871,7 +917,12 @@
       const tab = currentTab();
       if (!tab) return;
       if (tab.kind === "browser") {
-        navigateBrowserTab(tab, tab.history[tab.historyIndex], false);
+        if (tab.proxyUrl) {
+          const frame = paneEls[tab.id].querySelector("[data-proxy-frame]");
+          if (frame) frame.src = tab.proxyUrl;
+        } else {
+          navigateBrowserTab(tab, tab.history[tab.historyIndex], false);
+        }
       } else {
         const iframe = paneEls[tab.id].querySelector("iframe");
         iframe.src = iframe.src;
