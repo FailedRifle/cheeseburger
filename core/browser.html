@@ -163,6 +163,15 @@
       border-radius: 6px;
       cursor: default;
     }
+    .bookmark-secret {
+      color: inherit;
+      font: inherit;
+      border: 0;
+      background: transparent;
+      text-align: left;
+      cursor: default;
+    }
+    .bookmark-secret:focus { outline: none; }
     .bookmark.is-link { cursor: pointer; }
     .bookmark.is-link:hover { background: var(--bg-elevated-2); color: var(--text); }
 
@@ -299,6 +308,7 @@
     .setting-title { color: var(--text); font-size: 14px; font-weight: 600; }
     .setting-description, .setting-status { color: var(--text-faint); font-size: 12px; line-height: 1.4; }
     .setting-card select { min-width: 210px; padding: 9px 32px 9px 11px; color: var(--text); background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 7px; font: inherit; }
+    .setting-card .setting-action { min-width: 210px; padding: 9px 11px; color: var(--text); background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 7px; font: inherit; cursor: pointer; }
     .setting-status { min-height: 17px; margin: 4px 0 0; padding: 0 18px; }
     @media (max-width: 620px) { .page { padding: 24px 18px; } .setting-card { align-items: stretch; flex-direction: column; gap: 12px; } .setting-card select { width: 100%; } }
 
@@ -343,7 +353,7 @@
     </div>
 
     <div class="bookmarks-bar">
-      <span class="bookmark">Cheddar</span>
+      <button class="bookmark bookmark-secret" id="bookmark-cheddar" type="button">Cheddar</button>
       <span class="bookmark">On top</span>
       <span class="bookmark is-link" id="bookmark-changelog">Change logs</span>
     </div>
@@ -418,8 +428,22 @@
                 <option value="slides">Google Slides</option>
               </select>
             </label>
+            <label class="setting-card">
+              <span class="setting-copy"><span class="setting-title">Open CheddarOS in</span><span class="setting-description">Choose whether the app opens in a separate window, Chrome tab, this tab, or a tab inside CheddarOS.</span></span>
+              <select data-setting="launch-mode" aria-label="Open CheddarOS in">
+                <option value="window">New window (about:blank)</option>
+                <option value="chrome-tab">New Chrome tab</option>
+                <option value="normal-tab">This tab</option>
+                <option value="cheddar-tab">CheddarOS browser tab</option>
+              </select>
+            </label>
+            <div class="setting-card">
+              <span class="setting-copy"><span class="setting-title">Try the selected launch mode</span><span class="setting-description">Open another CheddarOS using the choice above.</span></span>
+              <button type="button" class="setting-action" data-open-cheddar>Open CheddarOS</button>
+            </div>
           </div>
           <p class="setting-status" data-cloak-status aria-live="polite"></p>
+          <p class="setting-status" data-launch-status aria-live="polite"></p>
         </div>
       </div>
     </div>
@@ -511,14 +535,35 @@
     function applyAppCloak(value = localStorage.getItem("cheddar-app-cloak") || "default") {
       const cloak = appCloaks[value] ? value : "default";
       const preset = appCloaks[cloak];
-      const favicon = document.querySelector("#app-window-favicon");
       localStorage.setItem("cheddar-app-cloak", cloak);
-      document.title = preset.title;
-      if (favicon) {
+      const documents = [document];
+      try {
+        if (window.top !== window && !documents.includes(window.top.document)) {
+          documents.push(window.top.document);
+        }
+      } catch {}
+      for (const appDocument of documents) {
+        appDocument.title = preset.title;
+        let favicon = appDocument.querySelector("#app-window-favicon");
+        if (!favicon) {
+          favicon = appDocument.querySelector('link[rel~="icon"]');
+        }
+        if (!favicon) {
+          favicon = appDocument.createElement("link");
+          favicon.rel = "icon";
+          appDocument.head.appendChild(favicon);
+        }
+        favicon.id = "app-window-favicon";
         favicon.href = preset.icon;
         favicon.type = preset.type;
       }
       return cloak;
+    }
+
+    function savedLaunchMode() {
+      const modes = ["window", "chrome-tab", "normal-tab", "cheddar-tab"];
+      const saved = localStorage.getItem("cheddar-app-launch-mode");
+      return modes.includes(saved) ? saved : "window";
     }
 
     const searchEngines = {
@@ -811,13 +856,17 @@
       const backend = pane.querySelector('[data-setting="backend"]');
       const searchEngine = pane.querySelector('[data-setting="search-engine"]');
       const cloak = pane.querySelector('[data-setting="cloak"]');
+      const launchMode = pane.querySelector('[data-setting="launch-mode"]');
+      const openCheddarButton = pane.querySelector("[data-open-cheddar]");
       const status = pane.querySelector("[data-settings-status]");
       const cloakStatus = pane.querySelector("[data-cloak-status]");
+      const launchStatus = pane.querySelector("[data-launch-status]");
       const savedTransport = localStorage.getItem("proxy-transport");
       transport.value = ["bare", "epoxy", "libcurl"].includes(savedTransport) ? savedTransport : "bare";
       backend.value = localStorage.getItem("proxy-backend") === "scramjet" || localStorage.getItem("proxyType") === "SJ" ? "scramjet" : "uv";
       searchEngine.value = selectedSearchEngine();
       cloak.value = applyAppCloak();
+      launchMode.value = savedLaunchMode();
 
       transport.addEventListener("change", async () => {
         const requested = transport.value;
@@ -853,6 +902,18 @@
         const value = applyAppCloak(cloak.value);
         cloakStatus.textContent = `CheddarOS window set to ${appCloaks[value].title}.`;
       });
+
+      launchMode.addEventListener("change", () => {
+        localStorage.setItem("cheddar-app-launch-mode", launchMode.value);
+        launchStatus.textContent = `CheddarOS will open in: ${launchMode.options[launchMode.selectedIndex].text}.`;
+      });
+
+      openCheddarButton.addEventListener("click", () => {
+        const opened = launchCheddarOS(launchMode.value);
+        launchStatus.textContent = opened
+          ? (launchMode.value === "normal-tab" ? "CheddarOS is already open in this tab." : "Opened CheddarOS using the selected mode.")
+          : "The browser blocked that launch. Allow pop-ups and try again.";
+      });
     }
 
     function switchToTab(id) {
@@ -861,6 +922,44 @@
       paneEls[id].classList.add("active");
       renderTabStrip();
       syncToolbarForActiveTab();
+    }
+
+    function addBrowserTab() {
+      const tab = makeBrowserTab();
+      tabs.push(tab);
+      buildPane(tab);
+      switchToTab(tab.id);
+      return tab;
+    }
+
+    window.cheddarOpenBrowserTab = () => addBrowserTab();
+
+    function launchCheddarOS(mode) {
+      const browserUrl = new URL("/core/browser.html", location.origin).href;
+      if (mode === "cheddar-tab") {
+        addBrowserTab();
+        return true;
+      }
+      if (mode === "normal-tab") {
+        try {
+          if (new URL(window.top.location.href).pathname === "/core/browser.html") return true;
+          window.__cheddarAllowClose = true;
+          window.top.location.assign(browserUrl);
+          return true;
+        } catch {
+          return false;
+        }
+      }
+      if (mode === "chrome-tab") return Boolean(window.open(browserUrl, "_blank"));
+      if (mode !== "window") return false;
+
+      const popup = window.open("about:blank#cheddar", "_blank", "width=800,height=600,toolbar=no,menubar=no,scrollbars=yes,resizable=yes");
+      if (!popup) return false;
+      const preset = appCloaks[applyAppCloak()];
+      popup.document.open();
+      popup.document.write(`<!doctype html><html lang="en"><head><meta charset="UTF-8"><title>${escapeHtml(preset.title)}</title><link rel="icon" id="app-window-favicon" href="${preset.icon}" type="${preset.type}"><style>html,body,iframe{margin:0;width:100%;height:100%;border:0;overflow:hidden;background:#000}iframe{display:block}</style></head><body><iframe src="${browserUrl}" title="${escapeHtml(preset.title)}"></iframe></body></html>`);
+      popup.document.close();
+      return true;
     }
 
     function closeTab(id) {
@@ -1046,6 +1145,15 @@
       if (tab && tab.kind === "browser") navigateBrowserTab(tab, "cheddar://changelog");
     });
 
+    let cheddarSecretClicks = 0;
+    document.querySelector("#bookmark-cheddar").addEventListener("click", () => {
+      cheddarSecretClicks += 1;
+      if (cheddarSecretClicks === 5) {
+        cheddarSecretClicks = 0;
+        window.alert("You found a secret! (Matthew doesn't know about this) - Xander; creator of xandersarcade");
+      }
+    });
+
     addressInput.addEventListener("keydown", (e) => {
       if (e.key !== "Enter") return;
       const tab = currentTab();
@@ -1062,6 +1170,7 @@
     syncToolbarForActiveTab();
 
     window.addEventListener('beforeunload', e => {
+      if (window.__cheddarAllowClose) return;
       e.preventDefault();
       e.returnValue = '';
     });

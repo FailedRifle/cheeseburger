@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>‎ </title>
     <link id="manifest-link" rel="manifest" href="">
-    <link rel="icon" href="loader/favicon.png" type="image/png">
+    <link id="app-window-favicon" rel="icon" href="loader/favicon.png" type="image/png">
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300&display=swap" rel="stylesheet">
     <style>
         body {
@@ -51,48 +51,57 @@
             document.getElementById('manifest-link').href = 'loader/manifest.json';
         }
 
+        function openCheddarBrowserTab() {
+            try {
+                if (window.parent === window || typeof window.parent.cheddarOpenBrowserTab !== 'function') return false;
+                window.parent.cheddarOpenBrowserTab();
+                return true;
+            } catch {
+                return false;
+            }
+        }
+
         if (isPWA && installable) {
             const browserUrl = new URL('core/browser.html', window.location.href).href;
+            const launchMode = localStorage.getItem('cheddar-app-launch-mode') || 'window';
 
-            const newWindow = window.open('about:blank#cheddar', '_blank', 'width=800,height=600,toolbar=no,menubar=no,scrollbars=yes,resizable=yes');
-
-            if (newWindow) {
-                const doc = newWindow.document;
-                
-                doc.open();
-                doc.write(`
-                    <!doctype html>
-                    <html lang="en">
-                    <head>
-                        <meta charset="UTF-8">
-                        <title>CheddarOS Proxy</title>
-                        <style>
-                            html, body {
-                                margin: 0;
-                                padding: 0;
-                                width: 100vw;
-                                height: 100vh;
-                                overflow: hidden;
-                                background-color: #000;
-                            }
-                            iframe {
-                                width: 100%;
-                                height: 100%;
-                                border: none;
-                                outline: none;
-                            }
-                        </style>
-                    </head>
-                    <body>
-                        <iframe src="${browserUrl}"></iframe>
-                    </body>
-                    </html>
-                `);
-                doc.close();
-
-                window.close();
+            if (launchMode === 'normal-tab') {
+                window.__cheddarAllowClose = true;
+                window.location.replace(browserUrl);
+            } else if (launchMode === 'chrome-tab') {
+                const newTab = window.open(browserUrl, '_blank');
+                document.body.textContent = newTab
+                    ? 'CheddarOS opened in a new Chrome tab. You can close this window.'
+                    : 'Pop-up blocked - please allow pop-ups for this site.';
+            } else if (launchMode === 'cheddar-tab' && openCheddarBrowserTab()) {
+                document.body.textContent = 'CheddarOS opened in a browser tab.';
+            } else if (launchMode === 'cheddar-tab') {
+                window.__cheddarAllowClose = true;
+                window.location.replace(browserUrl);
             } else {
-                document.body.textContent = "Popup blocked - please allow popups for this site.";
+                const newWindow = window.open('about:blank#cheddar', '_blank', 'width=800,height=600,toolbar=no,menubar=no,scrollbars=yes,resizable=yes');
+
+                if (newWindow) {
+                    const doc = newWindow.document;
+                    const cloaks = {
+                        default: ['CheddarOS', 'loader/favicon.png', 'image/png'],
+                        classroom: ['Google Classroom', 'core/images/cloakicons/classroom.ico', 'image/x-icon'],
+                        docs: ['Google Docs', 'core/images/cloakicons/docs.ico', 'image/x-icon'],
+                        drive: ['Google Drive', 'core/images/cloakicons/drive.ico', 'image/x-icon'],
+                        genesis: ['Genesis', 'core/images/cloakicons/genesis.ico', 'image/x-icon'],
+                        gmail: ['Gmail', 'core/images/cloakicons/gmail.ico', 'image/x-icon'],
+                        slides: ['Google Slides', 'core/images/cloakicons/slides.ico', 'image/x-icon'],
+                    };
+                    const preset = cloaks[localStorage.getItem('cheddar-app-cloak')] || cloaks.default;
+                    const iconUrl = new URL(preset[1], window.location.href).href;
+                    doc.open();
+                    doc.write(`<!doctype html><html lang="en"><head><meta charset="UTF-8"><title>${preset[0]}</title><link id="app-window-favicon" rel="icon" href="${iconUrl}" type="${preset[2]}"><style>html,body,iframe{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#000}iframe{display:block;border:0}</style></head><body><iframe src="${browserUrl}" title="${preset[0]}"></iframe></body></html>`);
+                    doc.close();
+                    window.__cheddarAllowClose = true;
+                    window.close();
+                } else {
+                    document.body.textContent = "Pop-up blocked - please allow pop-ups for this site.";
+                }
             }
         } else if (installable) {
             const btn = document.getElementById('install-btn');
@@ -123,6 +132,7 @@
         }
         
           window.addEventListener('beforeunload', e => {
+            if (window.__cheddarAllowClose) return;
             e.preventDefault();
             e.returnValue = '';
         });
