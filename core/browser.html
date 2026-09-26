@@ -426,21 +426,14 @@
     const ANNOUNCEMENT_TEXT = "CheddarOS is currently in Alpha — expect bugs.";
     const OS_VERSION = "v1.0.0";
 
-    function stripJsonComments(text) {
-      return text
-        .replace(/\/\*[\s\S]*?\*\//g, "")
-        .replace(/(^|[^:])\/\/.*$/gm, "$1");
-    }
-
     let changelogDataPromise = null;
     function loadChangelogData() {
       if (!changelogDataPromise) {
         changelogDataPromise = fetch("/core/json/changelogs.json")
           .then(res => {
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            return res.text();
+            return res.json();
           })
-          .then(text => JSON.parse(stripJsonComments(text)))
           .catch(error => {
             console.error("Could not load changelogs.json:", error);
             changelogDataPromise = null;
